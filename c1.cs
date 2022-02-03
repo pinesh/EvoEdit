@@ -7,9 +7,9 @@ using System.Numerics;
 using System.Security.Cryptography.X509Certificates;
 using System.Windows;
 using System.Windows.Input;
-using testapp1;
+using EvoEditApp;
 
-namespace testapp1
+namespace EvoEditApp
 {
     [MessagePackObject(false)]
     public class BrickEntity_mp
