@@ -201,7 +201,7 @@ namespace EvoEditApp
                     this._position = null;
                     this.has_valid_data = false;
                     this._compressed_size = 0;
-                    this.scale = s;
+                    this.scale = (int)(4*Math.Pow(2,s));
                     // this.block_index_to_block = { }
                     this._header_size = 26;
                     if (this._region_version == 0)
@@ -252,7 +252,7 @@ namespace EvoEditApp
                             continue;
                         }
                         i++;
-                        block_list.blist.Add(get_block_position_by_block_index(index,32), block);
+                        block_list.blist.Add(get_block_position_by_block_index(index), block);
                     }
                     Console.WriteLine($"found{i} blocks in segment");
                     s.BaseStream.Seek(this._data_size - this._compressed_size, SeekOrigin.Current);
@@ -284,13 +284,13 @@ namespace EvoEditApp
                     return (int)v;
                 }
 
-                public Vector3i get_block_position_by_block_index(int block_index,int m = 1)
+                public Vector3i get_block_position_by_block_index(int block_index)
                 {
                     var z = (int)(block_index / this._blocks_in_an_area);
                     var rest = block_index % this._blocks_in_an_area;
                     var y = (int)(rest / this._blocks_in_a_line);
                     var x = rest % this._blocks_in_a_line;
-                    return new Vector3i(-(x + _position.x) * m*scale, (y + _position.y) * m* scale, (z + _position.z) * m* scale);
+                    return new Vector3i(-(x + _position.x)*scale, (y + _position.y) * scale, (z + _position.z) * scale);
                 }
             }
         }

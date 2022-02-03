@@ -29,7 +29,7 @@ namespace EvoEditApp
             master = l;
             this.min = u;
             this.max = v;
-            this.scale = s;
+            this.scale = (int)(4 * Math.Pow(2, s));
             mblist = new List<mblocks>();
             Console.WriteLine(master.Count);
             Console.WriteLine($"min = [{min.x},{min.y},{min.z}]");
@@ -38,11 +38,10 @@ namespace EvoEditApp
         
         public Tuple<ushort,Vector3i> get_scale_wedge(Vector3i start, Vector3i end,int rot)
         {
-            int x = Math.Abs(start.x - end.x) / (32 * scale);
-            int y = Math.Abs(start.y - end.y) / (32 * scale);
-            int z = Math.Abs(start.z - end.z) / (32 * scale);
-            int offset = Math.Max(x, Math.Max(y, z)) * 32;
-            // int offset = Math.Max(x,Math.Max(y,z)) *32*scale;
+            int x = Math.Abs(start.x - end.x) / scale;
+            int y = Math.Abs(start.y - end.y) / scale;
+            int z = Math.Abs(start.z - end.z) / scale;
+            int offset = Math.Max(x, Math.Max(y, z))*4;
             switch (rot)
             {
                 case 0:
@@ -89,7 +88,7 @@ namespace EvoEditApp
 
         public ushort get_scale(Vector3i start, Vector3i end)
         {
-            return range_to_scale(Math.Abs(start.x - end.x)/(32*scale), Math.Abs(start.y - end.y) / (32 * scale), Math.Abs(start.z - end.z) / (32 * scale));
+            return range_to_scale(Math.Abs(start.x - end.x)/scale, Math.Abs(start.y - end.y) / scale, Math.Abs(start.z - end.z) / scale);
         }
         public ushort range_to_scale(int x,int y,int z)
         {
@@ -155,17 +154,17 @@ namespace EvoEditApp
         public void merge()
         {
             var startpos = min;
-            if (startpos.x % 32 != 0)
+            if (startpos.x % scale != 0)
             {
-                startpos.x -= startpos.x % 32;
+                startpos.x -= startpos.x % scale;
             }
-            if (startpos.y % 32 != 0)
+            if (startpos.y % scale != 0)
             {
-                startpos.y -= startpos.y % 32;
+                startpos.y -= startpos.y % scale;
             }
-            if (startpos.z % 32 != 0)
+            if (startpos.z % scale != 0)
             {
-                startpos.z -= startpos.z % 32;
+                startpos.z -= startpos.z % scale;
             }
             ok = new SortedDictionary<Vector3i, BlockBit>(new Vector3icompare());
             foreach (var keypair in master)
@@ -180,45 +179,19 @@ namespace EvoEditApp
                 if (!master.ContainsKey(key)) continue;
                 findOne(key);
             }
-
-            /*
-            
-            //loop through every key.
-            //y
-            //int i = 0;
-            for (int yIndex = min.y; yIndex <= max.y; yIndex += 32 * scale)
-            {
-                //z
-                for (int zIndex = min.z; zIndex <= max.z; zIndex += 32 * scale)
-                {
-                    //x
-                    for (int xIndex = min.x; xIndex <= max.x; xIndex += 32 * scale)
-                    {
-                        if(xIndex == -416 && yIndex == 544 && zIndex == 192)
-                            Console.WriteLine();
-                        var v = new Vector3i(xIndex, yIndex, zIndex);
-                        if (!master.ContainsKey(v)) continue;
-                        //i++;
-                        //Console.WriteLine($"Pos: {i}/{master.Count} blocks");
-                        findOne(v);
-                        
-                    }
-                }
-            }
-            */
             Console.WriteLine($"reduced to {mblist.Count}");
         }
 
         public List<Vector3i> getAllPoints(Vector3i start, Vector3i end, int type,int r)
         {
             List<Vector3i> points = new List<Vector3i>();
-            for (int yIndex = start.y; yIndex <= end.y; yIndex += 32 * scale)
+            for (int yIndex = start.y; yIndex <= end.y; yIndex += scale)
             {
                 //z
-                for (int zIndex = start.z ; zIndex <= end.z; zIndex += 32 * scale)
+                for (int zIndex = start.z ; zIndex <= end.z; zIndex += scale)
                 {
                     //x
-                    for (int xIndex = start.x; xIndex <= end.x; xIndex += 32 * scale)
+                    for (int xIndex = start.x; xIndex <= end.x; xIndex += scale)
                     {
                         var v = new Vector3i(xIndex, yIndex, zIndex);
                         if (!comp(v, type, r)) return points;
@@ -252,15 +225,15 @@ namespace EvoEditApp
                 return;
             }
             List<Vector3i> mastlist = new List<Vector3i>();
-            int max = 16 * scale * 32;
+            int max = 16 * scale;
             var u = start;
             //loop through every key.
             //y
             int c = 0;
             while (c < 16)
             {
-                List<Vector3i> lv = getAllPoints(new Vector3i(start.x + (32 * scale * c), start.y, start.z),
-                    new Vector3i(u.x + (32 * scale * c), u.y, u.z), type, r);
+                List<Vector3i> lv = getAllPoints(new Vector3i(start.x + (scale * c), start.y, start.z),
+                    new Vector3i(u.x + (scale * c), u.y, u.z), type, r);
                 if (mastlist.Count + lv.Count > c)
                 {
                     mastlist.AddRange(lv);
@@ -280,7 +253,7 @@ namespace EvoEditApp
                 mblocks zm = new mblocks
                 {
                     startpos = start,
-                    endpos = new Vector3i(u.x + (32 * scale * xcount), u.y, u.z),
+                    endpos = new Vector3i(u.x + (scale * xcount), u.y, u.z),
                     type = type,
                     rot = r
                 };
@@ -297,8 +270,8 @@ namespace EvoEditApp
             c = 1;
             while (c < 16)
             {
-                List<Vector3i> lv = getAllPoints(new Vector3i(start.x, start.y, start.z + (32 * scale * (c))),
-                    new Vector3i(u.x + (32 * scale * xcount), u.y, u.z + (32 * scale * c)), type, r);
+                List<Vector3i> lv = getAllPoints(new Vector3i(start.x, start.y, start.z + (scale * (c))),
+                    new Vector3i(u.x + (scale * xcount), u.y, u.z + (scale * c)), type, r);
                 if (mastlist.Count + lv.Count == (xcount+1)*(c+1))
                 {
                     mastlist.AddRange(lv);
@@ -317,7 +290,7 @@ namespace EvoEditApp
                 mblocks zm = new mblocks
                 {
                     startpos = start,
-                    endpos = new Vector3i(u.x + (32 * scale * xcount), u.y, u.z + (32 * scale * zcount)),
+                    endpos = new Vector3i(u.x + (scale * xcount), u.y, u.z + (scale * zcount)),
                     type = type,
                     rot = r
                 };
@@ -333,8 +306,8 @@ namespace EvoEditApp
             c = 1;
             while (c < 16)
             {
-                List<Vector3i> lv = getAllPoints(new Vector3i(start.x, start.y + (32 * scale * (c)), start.z),
-                    new Vector3i(u.x + (32 * scale * xcount), u.y + (32 * scale * c), u.z + (32 * scale * zcount)),
+                List<Vector3i> lv = getAllPoints(new Vector3i(start.x, start.y + (scale * (c)), start.z),
+                    new Vector3i(u.x + (scale * xcount), u.y + (scale * c), u.z + (scale * zcount)),
                     type, r);
                 
                 if (mastlist.Count + lv.Count == (c+1)*(xcount+1)*(zcount+1))
@@ -352,7 +325,7 @@ namespace EvoEditApp
             mblocks m = new mblocks
             {
                 startpos = start,
-                endpos = new Vector3i(u.x + (32 * scale * xcount), u.y + (32 * scale * (c-1)), u.z + (32 * scale * zcount)),
+                endpos = new Vector3i(u.x + (scale * xcount), u.y + (scale * (c-1)), u.z + (scale * zcount)),
                 type = type,
                 rot = r
             };

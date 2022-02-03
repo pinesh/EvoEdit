@@ -13,8 +13,8 @@
                     <MenuItem Header="_Set Paths" Click="Path_Set_Click"/>
                     <MenuItem Header="Import" >
                         <MenuItem Header="_Folder" Click="Import_Folder" />
-                        <MenuItem Header="_Blueprint" Click="MenuItem_Click_2"/>
-                        <MenuItem Header="_.OBJ" Click="Coming_Soon"/>
+                        <MenuItem Header="_Blueprint (.sment)" Click="MenuItem_Click_2"/>
+                        <MenuItem Header="_Model (.obj)" Click="Coming_Soon"/>
                     </MenuItem>
                 </MenuItem>
 
@@ -105,8 +105,11 @@ Margin="5,31,5,5" Grid.RowSpan="2">
         <GroupBox x:Name="groupBox_Copy" Header="Settings" HorizontalAlignment="Left" Height="172" Margin="343,23,0,0" VerticalAlignment="Top" Width="159">
             <ComboBox x:Name="cmbox_ratio" HorizontalAlignment="Left" Margin="97,62,-2,0" VerticalAlignment="Top" Width="52" IsEditable="False"  
                       IsReadOnly ="True" Text="Set Scale" SelectionChanged="comboBox_SelectionChanged">
+                <ComboBoxItem>1/8m</ComboBoxItem>
+                <ComboBoxItem>1/4m</ComboBoxItem>
+                <ComboBoxItem>1/2m</ComboBoxItem>
                 <ComboBoxItem IsSelected="True">1m</ComboBoxItem>
-                <ComboBoxItem >2m</ComboBoxItem>
+                <ComboBoxItem>2m</ComboBoxItem>
                 <ComboBoxItem>4m</ComboBoxItem>
                 <ComboBoxItem>8m</ComboBoxItem>
                 <ComboBoxItem>16m</ComboBoxItem>

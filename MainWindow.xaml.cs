@@ -10,6 +10,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
+using System.Xml;
 using Ionic.Zip;
 using Microsoft.Win32;
 using Ookii.Dialogs.Wpf;
@@ -36,6 +37,64 @@ namespace EvoEditApp
             temppath = "";
             globaldestinationpath = @"";
             SetProgress(0, "");
+            check_output_path();
+
+
+        }
+
+        private void prompt_path()
+        {
+            if (MessageBox.Show("You haven't set an output folder, would you like to do so now?",
+                    "Set output path",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning) == MessageBoxResult.Yes)
+            {
+                setpath(); // Do something here
+            }
+        }
+
+        private void setpath()
+        {
+            var ookiiDialog = new VistaFolderBrowserDialog();
+            if (ookiiDialog.ShowDialog() == true)
+            {
+                globaldestinationpath = ookiiDialog.SelectedPath;
+                CurrentFolder.Text = new StringBuilder("Output: ").Append(globaldestinationpath).ToString();
+                write_output_path();
+            }
+        }
+        private void check_output_path()
+        {
+            try
+            {
+                string p = Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location), "data.xml");
+                FileInfo f = new FileInfo(p);
+                if (f.Exists)
+                {
+                    XmlDocument doc = new XmlDocument();
+                    doc.Load(p);
+                    globaldestinationpath = doc.InnerText;
+                    CurrentFolder.Text = new StringBuilder("Output: ").Append(globaldestinationpath).ToString();
+                }
+                else
+                {
+                    prompt_path();   
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw new Exception();
+            }
+        }
+
+        private void write_output_path()
+        {
+            var p = Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location), "data.xml");
+            var writer = new System.Xml.Serialization.XmlSerializer(typeof(String));
+            var file = System.IO.File.Create(p);
+            writer.Serialize(file, globaldestinationpath);
+            file.Close();
         }
 
         private void button_Click(object sender, RoutedEventArgs e)
@@ -101,8 +160,8 @@ namespace EvoEditApp
         private void comboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             var cm = (ComboBox)sender;
-            var i = cm.Items.IndexOf(cm.SelectedItem);
-            scale = (int)Math.Pow(2, i);
+            scale = cm.Items.IndexOf(cm.SelectedItem);
+            //scale = (int)Math.Pow(2, i);
         }
 
         //this is the thread entry
@@ -140,9 +199,12 @@ namespace EvoEditApp
                     UpdateProgress(interval, $"");
                 }
             }
-            catch (ThreadAbortException e)
+            catch (Exception e)
             {
-                Console.WriteLine("Thread Abort Exception");
+                Console.WriteLine($"Thread Abort Exception {e}");
+                MessageBox.Show($"Unable to import: {e.Message}", "Import error", MessageBoxButton.OK, MessageBoxImage.Error);
+                UpdateProgress(100, $"");
+                //throw new Exception(e.Message);
             }
             finally
             {
@@ -150,10 +212,11 @@ namespace EvoEditApp
                 UpdateProgress(0, $"");
             }
         }
+
+
         //port the unoptimized blueprint. 
         private static void testport(string name,Dictionary<Vector3i,BlockBit> blocks,int scale)
-        {
-            var scalenum = (int)Math.Log(scale, 2);
+        { ;
             string strExeFilePath = System.Reflection.Assembly.GetExecutingAssembly().Location;
             string p = Path.Combine(Path.GetDirectoryName(strExeFilePath), "testentity.sevo");
 
@@ -168,6 +231,7 @@ namespace EvoEditApp
                 // Launch OpenFileDialog by calling ShowDialog method
                 ParentEntity P = new ParentEntity(x);
                     int i = x.brickDatas.datas.Length;
+                    int multiplier = (int)Math.Pow(2, scale);
                     foreach (KeyValuePair<Vector3i, BlockBit> newblock in blocks)
                     {
                         Vector3i paint = newblock.Value.GetSevoPaint();
@@ -176,12 +240,12 @@ namespace EvoEditApp
                         {
                             scale = 0,
                             rotation = rot,
-                            gridPosition = newblock.Key + scale * BlockOffsets.getOffsets(rot),
+                            gridPosition = newblock.Key +  multiplier* BlockOffsets.getOffsets(rot) + BlockOffsets.getScaleOffsets((byte)scale),
                             brickId = (ushort)newblock.Value.GetSevoID(),
                             color = (object)new object[] { paint.x, paint.y, paint.z, 255 },
                             material = 0,
                             healthScore = 255,
-                            gridSize = (byte)(3+ scalenum),
+                            gridSize = (byte)(scale),
                             instanceId = i
                         });
                         i += 1;
@@ -200,7 +264,6 @@ namespace EvoEditApp
         }
         private static void WriteSevo(string name,mergenew m,int scale)
         {
-            var scalenum = (int)Math.Log(scale,2);
             string strExeFilePath = System.Reflection.Assembly.GetExecutingAssembly().Location;
             string p = Path.Combine(Path.GetDirectoryName(strExeFilePath), "testentity.sevo");
 
@@ -211,7 +274,7 @@ namespace EvoEditApp
             using (FileStream fs = File.OpenRead(p))
             {
                 var x = BrickEntity_mp.GetSaveFromFile(fs, true);
-
+                int multiplier = (int)Math.Pow(2, scale);
                 List<BrickInstanceData> d = new List<BrickInstanceData>();
                 ParentEntity P = new ParentEntity(x);
                 int i = x.brickDatas.datas.Length;
@@ -232,19 +295,16 @@ namespace EvoEditApp
                                 .Deconstruct(out sc, out additional);
                             break;
                     }
-
-
-
                     d.Add(new BrickInstanceData
                     {
                         scale = sc,
                         rotation = rot,
-                        gridPosition = newBlock.startpos + scale*BlockOffsets.getOffsets(rot) + scale*additional,
+                        gridPosition = newBlock.startpos + multiplier*BlockOffsets.getOffsets(rot) + multiplier* additional + BlockOffsets.getScaleOffsets((byte)scale),
                         brickId = (ushort)BlockTypes.Sevo_ID((short)newBlock.type),
                         color = (object)new object[] { paint.x, paint.y, paint.z, 255 },
                         material = 0,
                         healthScore = 255,
-                        gridSize = (byte)(3 + scalenum),
+                        gridSize = (byte)(scale),
                         instanceId = i
                     });
                     i += 1;
@@ -412,12 +472,7 @@ namespace EvoEditApp
 
         private void Path_Set_Click(object sender, RoutedEventArgs e)
         {
-            var ookiiDialog = new VistaFolderBrowserDialog();
-            if (ookiiDialog.ShowDialog() == true)
-            {
-                globaldestinationpath = ookiiDialog.SelectedPath;
-                CurrentFolder.Text = new StringBuilder("Output: ").Append(globaldestinationpath).ToString();
-            }
+            setpath();
         }
 
         private void Coming_Soon(object sender, RoutedEventArgs e)
@@ -458,10 +513,22 @@ namespace EvoEditApp
         }
 
     }
-
-
     public static class BlockOffsets
     {
+        private static Dictionary<byte, Vector3i> scaleoffsets = new Dictionary<byte, Vector3i>
+        {
+            { 0, new Vector3i(2, 0, 2) },
+            { 1, new Vector3i(4, 0, 4) },
+            { 2, new Vector3i(8, 0, 8) },
+            { 3, new Vector3i(0, 16, 0) },//1m
+            { 4, new Vector3i(16, -16, 16) },//2m //8 = 0.375m
+            { 5, new Vector3i(48, -16, 48) },//4m
+            { 6, new Vector3i(112,-16, 112) },//8m
+            { 7, new Vector3i(240, -16, 240) },//16m
+            { 8, new Vector3i(496, -16, 496) } //32m
+        };
+
+
         private static Dictionary<byte, Vector3i> offsets = new Dictionary<byte, Vector3i>
         {
             {0,new Vector3i(0,0,0)},
@@ -469,33 +536,37 @@ namespace EvoEditApp
             {2,new Vector3i(0,0,0)},
             {3,new Vector3i(0,0,0)},
 
-            {4,new Vector3i(0,32,0)},
-            {5,new Vector3i(0,32,0)},
-            {6,new Vector3i(0,32,0)},
-            {7,new Vector3i(0,32,0)},
+            {4,new Vector3i(0,4,0)},
+            {5,new Vector3i(0,4,0)},
+            {6,new Vector3i(0,4,0)},
+            {7,new Vector3i(0,4,0)},
 
-            {8,new Vector3i(0,16,-16)},
-            {9,new Vector3i(0,16,-16)},
-            {10,new Vector3i(0,16,-16)},// {10,new Vector3i(0,8,-8)},
-            {11,new Vector3i(0,16,-16)},// {11,new Vector3i(0,8,-8)},
+            {8,new Vector3i(0,2,-2)},
+            {9,new Vector3i(0,2,-2)},
+            {10,new Vector3i(0,2,-2)},// {10,new Vector3i(0,8,-8)},
+            {11,new Vector3i(0,2,-2)},// {11,new Vector3i(0,8,-8)},
 
-            {12,new Vector3i(0,16,16)},
-            {13,new Vector3i(0,16,16)},
-            {14,new Vector3i(0,16,16)},
-            {15,new Vector3i(0,16,16)},
+            {12,new Vector3i(0,2,2)},
+            {13,new Vector3i(0,2,2)},
+            {14,new Vector3i(0,2,2)},
+            {15,new Vector3i(0,2,2)},
 
-            {16,new Vector3i(-16,16,0)},//{16,new Vector3i(-8,8,0)},
-            {17,new Vector3i(-16,16,0)},// {17,new Vector3i(-8,8,0)},
-            {18,new Vector3i(-16,16,0)},
-            {19,new Vector3i(-16,16,0)},//  {19,new Vector3i(-8,8,0)},
+            {16,new Vector3i(-2,2,0)},//{2,new Vector3i(-8,8,0)},
+            {17,new Vector3i(-2,2,0)},// {17,new Vector3i(-8,8,0)},
+            {18,new Vector3i(-2,2,0)},
+            {19,new Vector3i(-2,2,0)},//  {19,new Vector3i(-8,8,0)},
 
-            {20,new Vector3i(16,16,0)},
-            {21,new Vector3i(16,16,0)},//  {21,new Vector3i(8,8,0)},
-            {22,new Vector3i(16,16,0)},// {22,new Vector3i(8,8,0)},
-            {23,new Vector3i(16,16,0)},
+            {20,new Vector3i(2,2,0)},
+            {21,new Vector3i(2,2,0)},//  {21,new Vector3i(8,8,0)},
+            {22,new Vector3i(2,2,0)},// {22,new Vector3i(8,8,0)},
+            {23,new Vector3i(2,2,0)},
         };
-        
 
+        public static Vector3i getScaleOffsets(byte key)
+        {
+
+            return scaleoffsets[key];
+        }
 
         public static Vector3i getOffsets(byte key)
         {

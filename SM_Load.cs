@@ -532,7 +532,7 @@ internal class SmdRegion
                 this._position = null;
                 this.has_valid_data = false;
                 this._compressed_size = 0;
-                this.scale = s;
+                this.scale = (int)(4 * Math.Pow(2, s));
                 // this.block_index_to_block = { }
             }
             public static byte[] DecompressZlib(Stream source)
@@ -621,7 +621,7 @@ internal class SmdRegion
                 var rest = block_index % this._blocks_in_an_area;
                 var y = (int)(rest / this._blocks_in_a_line);
                 var x = rest % this._blocks_in_a_line;
-                return new Vector3i(-(x + _position.x)*32*scale, (y + _position.y)*32 * scale, (z + _position.z)*32 * scale);
+                return new Vector3i(-(x + _position.x)*scale, (y + _position.y)* scale, (z + _position.z)* scale);
             }
     }
     }
