@@ -94,10 +94,7 @@ namespace EvoEditApp
 
         private void cleanup()
         {
-            if (Directory.Exists(temppath))
-            {
-                Directory.Delete(temppath, true);
-            }
+           
         }
         
         //Internal scale setting changed
