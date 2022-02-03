@@ -1,0 +1,123 @@
+﻿<Window x:Class="EvoEditApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:EvoEditApp"
+        mc:Ignorable="d"
+        Title="EvoEdit, Starship Evo Voxel Converter" Height="450" Width="521.834" Closing="Window_Closing" >
+    <Grid Margin="0,0,2,0">
+        <DockPanel HorizontalAlignment="Left" Height="18" LastChildFill="True" VerticalAlignment="Top" Width="166">
+            <Menu  DockPanel.Dock="Top" Margin="0,0,-330,0">
+                <MenuItem Name ="FileHeader" Header="File" Width="94" >
+                    <MenuItem Header="_Set Paths" Click="Path_Set_Click"/>
+                    <MenuItem Header="Import" >
+                        <MenuItem Header="_Folder" Click="Import_Folder" />
+                        <MenuItem Header="_Blueprint" Click="MenuItem_Click_2"/>
+                        <MenuItem Header="_.OBJ" Click="Coming_Soon"/>
+                    </MenuItem>
+                </MenuItem>
+
+                <MenuItem Name ="ConfigureHeader" Header="_Configure" Width="94" >
+                    <MenuItem Header="_Colors" Click="Coming_Soon"/>
+                    <MenuItem Header="_Block Mapping" Click="Coming_Soon"/>
+                </MenuItem>
+                <MenuItem Header="_Help" Width="94" >
+                    <MenuItem Header="_Guide" Click ="Open_Github_Guide" />
+                    <MenuItem Header="_Github"  Click ="Open_Github" />
+                </MenuItem>
+            </Menu>
+        </DockPanel>
+        <Button x:Name="btn_import" HorizontalAlignment="Left" Margin="10,353,0,0" VerticalAlignment="Top" Width="323" Height="25" Click="button_Click_1">
+            <Button.Content>
+                <StackPanel VerticalAlignment="Center" 
+                            HorizontalAlignment="Center" Orientation="Horizontal" 
+                            Background="Transparent" Height="25">
+                    <Viewbox Margin="0 3" >
+                        <Path Fill="Gray" 
+                              VerticalAlignment="Center" HorizontalAlignment="Center" 
+                              Data="M16,10H14V7H10V10H8L12,14M19,15H15A3,3 0 0,1 12,
+                      18A3,3 0 0,1 9,15H5V5H19M19,3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,
+                      0 5,21H19A2,2 0 0,0 21,19V5A2,2 0 0,0 19,3Z"/>
+                    </Viewbox>
+                    <Label Content="Import[] Blueprints" VerticalAlignment="Center" 
+                           HorizontalAlignment="Center" VerticalContentAlignment="Center" 
+                           HorizontalContentAlignment="Center" Margin="2 1" Padding="5" 
+                           Foreground="Gray" FontSize="10" FontWeight="Bold"/>
+                </StackPanel>
+            </Button.Content>
+        </Button>
+        <GroupBox x:Name="groupBox" Header="Starmade" HorizontalAlignment="Left" Height="325" Margin="0,23,0,0" VerticalAlignment="Top" Width="338">
+            <ListView Grid.Row="2" HorizontalAlignment="Stretch" Name="MyListView"
+Margin="5,31,5,5" Grid.RowSpan="2">
+                <ListView.View>
+                    <GridView>
+                        <GridViewColumn Header="Include">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <CheckBox Margin="5, 0" IsChecked="{Binding IsSelected}" Checked="CheckBox_Checked_1" Unchecked="CheckBox_Unchecked"/>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                        <GridViewColumn Header="Name">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Margin="5, 0" Text="{Binding name}"/>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                    </GridView>
+                </ListView.View>
+            </ListView>
+        </GroupBox>
+        <DockPanel Height="30" VerticalAlignment="Bottom">
+            <StatusBar DockPanel.Dock="Bottom">
+                <StatusBar.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="100" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="100" />
+                            </Grid.ColumnDefinitions>
+                        </Grid>
+                    </ItemsPanelTemplate>
+                </StatusBar.ItemsPanel>
+                <StatusBarItem>
+                    <TextBlock Name="n" Text ="Built By Pinesh" />
+                </StatusBarItem>
+                <Separator Grid.Column="1" />
+                <StatusBarItem Grid.Column="2">
+                    <TextBlock Name ="CurrentFolder" Text="Ouput: Not Set" />
+                </StatusBarItem>
+                <StatusBarItem Grid.Column="3">
+                    <TextBlock  Name ="State" Text="what is being done" />
+                </StatusBarItem>
+                <StatusBarItem Grid.Column="4">
+                    <ProgressBar Name="progressBar" Value="50" Width="90" Height="16" />
+                </StatusBarItem>
+            </StatusBar>
+        </DockPanel>
+        <Label x:Name="label" Content="Discovered Files in:" HorizontalAlignment="Left" Height="38" Margin="1,46,0,0" VerticalAlignment="Top" Width="165"/>
+        <Label x:Name="lbl_filename" HorizontalAlignment="Left" Height="31" Margin="125,46,0,0" VerticalAlignment="Top" Width="158"/>
+        <GroupBox x:Name="groupBox_Copy" Header="Settings" HorizontalAlignment="Left" Height="172" Margin="343,23,0,0" VerticalAlignment="Top" Width="159">
+            <ComboBox x:Name="cmbox_ratio" HorizontalAlignment="Left" Margin="97,62,-2,0" VerticalAlignment="Top" Width="52" IsEditable="False"  
+                      IsReadOnly ="True" Text="Set Scale" SelectionChanged="comboBox_SelectionChanged">
+                <ComboBoxItem IsSelected="True">1m</ComboBoxItem>
+                <ComboBoxItem >2m</ComboBoxItem>
+                <ComboBoxItem>4m</ComboBoxItem>
+                <ComboBoxItem>8m</ComboBoxItem>
+                <ComboBoxItem>16m</ComboBoxItem>
+                <ComboBoxItem>32m</ComboBoxItem>
+            </ComboBox>
+        </GroupBox>
+
+        <CheckBox x:Name="checkBox_Optimize" Content="Optimize Build" HorizontalAlignment="Left" Height="26" Margin="354,46,0,0" VerticalAlignment="Top" Width="108" IsChecked="True"/>
+        <CheckBox x:Name="checkBox_Paint" Content="Ignore Paint" HorizontalAlignment="Left" Height="26" Margin="354,72,0,0" VerticalAlignment="Top" Width="108" IsChecked="False"/>
+        <GroupBox x:Name="groupBox1" Header="Verbose" HorizontalAlignment="Left" Height="178" Margin="343,200,0,0" VerticalAlignment="Top" Width="159"/>
+        <Label x:Name="label2" Content="Translation Ratio:" HorizontalAlignment="Left" Margin="343,98,0,0" VerticalAlignment="Top"/>
+
+    </Grid>
+</Window>
