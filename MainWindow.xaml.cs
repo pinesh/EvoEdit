@@ -50,7 +50,7 @@ namespace EvoEditApp
             // Load content of file in a TextBlock
             if (result == true)
             {
-
+                
                 using (FileStream fs = File.OpenRead(openFileDlg.FileName))
                 {
                    var x=  BrickEntity_mp.GetSaveFromFile(fs, true);
@@ -72,7 +72,7 @@ namespace EvoEditApp
             Directory.CreateDirectory(uniqueTempDir);
             return uniqueTempDir;
         }
-
+        
         public class BoolStringClass
         {
             public string name { get; set; }
@@ -94,12 +94,9 @@ namespace EvoEditApp
 
         private void cleanup()
         {
-            if (Directory.Exists(temppath))
-            {
-               //Directory.Delete(temppath, true);
-            }
+           
         }
-
+        
         //Internal scale setting changed
         private void comboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
@@ -153,7 +150,7 @@ namespace EvoEditApp
                 UpdateProgress(0, $"");
             }
         }
-        //port the unoptimized blueprint.
+        //port the unoptimized blueprint. 
         private static void testport(string name,Dictionary<Vector3i,BlockBit> blocks,int scale)
         {
             var scalenum = (int)Math.Log(scale, 2);
@@ -270,7 +267,7 @@ namespace EvoEditApp
             progressBar.Dispatcher.BeginInvoke(DispatcherPriority.Normal,
                 new DispatcherOperationCallback(delegate
                 {
-
+                   
                     progressBar.Value += newProgress;
                     State.Text = newMessage;
                     if (progressBar.Value >= 90)
@@ -290,7 +287,7 @@ namespace EvoEditApp
         //Import currently selected blueprints
         private void button_Click_1(object sender, RoutedEventArgs e)
         {
-
+             
                 if (globaldestinationpath.Length == 0)
                 {
                     MessageBox.Show("Destination path not set!");
@@ -363,7 +360,7 @@ namespace EvoEditApp
                 FileList.Add(b);
             }
             currentdirectories=1;
-
+            
             Console.WriteLine(di);
             ((Label)((StackPanel)btn_import.Content).Children[1]).Content = "Import[1] Blueprints";
         }
@@ -392,7 +389,7 @@ namespace EvoEditApp
                     cleanup();
                 }
                 DirectoryInfo di = new DirectoryInfo(ookiiDialog.SelectedPath);
-
+                
 
                 lbl_filename.Content = Path.GetFileName(di.Name);
                 temppath = di.FullName;
@@ -408,7 +405,7 @@ namespace EvoEditApp
                 }
                 currentdirectories = 1;
 
-                Console.WriteLine(di);
+                Console.WriteLine(di); 
                 ((Label)((StackPanel)btn_import.Content).Children[1]).Content = "Import[1] Blueprints";
             }
         }
@@ -497,12 +494,12 @@ namespace EvoEditApp
             {22,new Vector3i(16,16,0)},// {22,new Vector3i(8,8,0)},
             {23,new Vector3i(16,16,0)},
         };
-
+        
 
 
         public static Vector3i getOffsets(byte key)
         {
-
+            
             return offsets[key];
         }
     }

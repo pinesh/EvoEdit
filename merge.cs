@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Linq;
 using System.Net.Sockets;
 using System.Numerics;
@@ -17,13 +18,14 @@ namespace EvoEditApp
     {
         public Dictionary<Vector3i, BlockBit> master;
         public List<mblocks> mblist;
-        
+        private SortedDictionary<Vector3i, BlockBit> ok;
         public Vector3i max;
         public Vector3i min;
         public int scale;
 
         public mergenew(Dictionary<Vector3i, BlockBit> l,  Vector3i u, Vector3i v , int s = 1)
         {
+            ok = new SortedDictionary<Vector3i, BlockBit>(new Vector3icompare());
             master = l;
             this.min = u;
             this.max = v;
@@ -97,6 +99,59 @@ namespace EvoEditApp
             return u;
 
         }
+
+        public class Vector3icompare : IComparer<Vector3i>
+        {
+            public int Compare(Vector3i x, Vector3i y)
+            {
+                if (object.ReferenceEquals(x, y))
+                {
+                    return 0;
+                }
+
+                if (x == null)
+                {
+                    return -1;
+                }
+
+                if (y == null)
+                {
+                    return 1;
+                }
+
+                //easy lower y is always smaller
+                if (x.y < y.y)
+                {
+                    return -1;
+                }
+
+                if (x.y > y.y)
+                {
+                    return 1;
+                }
+                //order on same y plane
+
+                
+                if (x.z < y.z)
+                {
+                    return -1;
+                }
+                if (x.z > y.z)
+                {
+                    return 1;
+                }
+
+                //we want least x first
+                if (x.x < y.x)
+                {
+                    return -1;
+                }
+                else//if a bigger x
+                {
+                    return 1;
+                }
+            }
+        }
         public void merge()
         {
             var startpos = min;
@@ -112,8 +167,22 @@ namespace EvoEditApp
             {
                 startpos.z -= startpos.z % 32;
             }
-
+            ok = new SortedDictionary<Vector3i, BlockBit>(new Vector3icompare());
+            foreach (var keypair in master)
+            {
+                ok.Add(keypair.Key,keypair.Value);
+            }
             min = startpos;
+
+            List<Vector3i> keys = ok.Keys.ToList();
+            foreach (var key in keys)
+            {
+                if (!master.ContainsKey(key)) continue;
+                findOne(key);
+            }
+
+            /*
+            
             //loop through every key.
             //y
             //int i = 0;
@@ -136,6 +205,7 @@ namespace EvoEditApp
                     }
                 }
             }
+            */
             Console.WriteLine($"reduced to {mblist.Count}");
         }
 

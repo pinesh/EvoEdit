@@ -260,6 +260,8 @@ namespace EvoEditApp
             return new Vector3i((int)Math.Round(Math.Floor(a.X)), (int)Math.Round(Math.Floor(a.Y)), (int)Math.Round(Math.Floor(a.Z)));
         }
 
+
+
         // Token: 0x06000108 RID: 264 RVA: 0x00007738 File Offset: 0x00005938
         public int CompareTo(Vector3i other)
         {
