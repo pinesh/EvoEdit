@@ -96,7 +96,7 @@ namespace EvoEditApp
         {
             if (Directory.Exists(temppath))
             {
-                Directory.Delete(temppath, true);
+               //Directory.Delete(temppath, true);
             }
         }
         
