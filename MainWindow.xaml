@@ -6,10 +6,47 @@
         xmlns:local="clr-namespace:EvoEditApp"
         mc:Ignorable="d"
         Title="EvoEdit, Starship Evo Voxel Converter" Height="450" Width="521.834" Closing="Window_Closing" >
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <!-- Load this specific theme because the Aero theme for CheckBox has issues. -->
+            <Style x:Key="TreeViewItemStyle" TargetType="TreeViewItem">
+                <Setter Property="IsExpanded" Value="True" />
+                <Setter Property="IsSelected" Value="{Binding IsInitiallySelected, Mode=OneTime}" />
+                <Setter Property="KeyboardNavigation.AcceptsReturn" Value="True" />
+            </Style>
+
+            <HierarchicalDataTemplate 
+                x:Key="CheckBoxItemTemplate"
+                ItemsSource="{Binding Children, Mode=OneWay}"
+            >
+                <StackPanel Orientation="Horizontal">
+                    <!-- These elements are bound to a FooViewModel object. -->
+                    <CheckBox
+                        Focusable="False" 
+                        IsChecked="{Binding IsChecked}" 
+                        VerticalAlignment="Center"
+                    />
+                    <ContentPresenter 
+                        Content="{Binding Name, Mode=OneWay}" 
+                        Margin="2,0"
+                    />
+                </StackPanel>
+            </HierarchicalDataTemplate>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Window.DataContext>
+        <ObjectDataProvider 
+            MethodName="CreateFoos"
+            ObjectType="{x:Type local:FooViewModel}" />
+    </Window.DataContext>
+
     <Grid Margin="0,0,2,0">
-        <DockPanel HorizontalAlignment="Left" Height="18" LastChildFill="True" VerticalAlignment="Top" Width="166">
-            <Menu  DockPanel.Dock="Top" Margin="0,0,-330,0">
-                <MenuItem Name ="FileHeader" Header="File" Width="94" >
+        <DockPanel HorizontalAlignment="Left" Height="24" LastChildFill="True" VerticalAlignment="Top" Width="166">
+            <Menu  DockPanel.Dock="Top" Margin="0,0,-348,0" Height="24">
+
+                <MenuItem x:Name ="FileHeader" Header="File" Width="94" Height="24" Margin="0" >
                     <MenuItem Header="_Set Paths" Click="Path_Set_Click"/>
                     <MenuItem Header="Import" >
                         <MenuItem Header="_Folder" Click="Import_Folder" />
@@ -18,7 +55,7 @@
                     </MenuItem>
                 </MenuItem>
 
-                <MenuItem Name ="ConfigureHeader" Header="_Configure" Width="94" >
+                <MenuItem x:Name ="ConfigureHeader" Header="_Configure" Width="94" >
                     <MenuItem Header="_Colors" Click="Coming_Soon"/>
                     <MenuItem Header="_Block Mapping" Click="Coming_Soon"/>
                 </MenuItem>
@@ -28,7 +65,7 @@
                 </MenuItem>
             </Menu>
         </DockPanel>
-        <Button x:Name="btn_import" HorizontalAlignment="Left" Margin="10,353,0,0" VerticalAlignment="Top" Width="323" Height="25" Click="button_Click_1">
+        <Button x:Name="btn_import" IsEnabled="False" HorizontalAlignment="Left" Margin="10,353,0,0" VerticalAlignment="Top" Width="323" Height="25" Click="button_Click_1">
             <Button.Content>
                 <StackPanel VerticalAlignment="Center" 
                             HorizontalAlignment="Center" Orientation="Horizontal" 
@@ -48,27 +85,25 @@
             </Button.Content>
         </Button>
         <GroupBox x:Name="groupBox" Header="Starmade" HorizontalAlignment="Left" Height="325" Margin="0,23,0,0" VerticalAlignment="Top" Width="338">
-            <ListView Grid.Row="2" HorizontalAlignment="Stretch" Name="MyListView"
-Margin="5,31,5,5" Grid.RowSpan="2">
-                <ListView.View>
-                    <GridView>
-                        <GridViewColumn Header="Include">
-                            <GridViewColumn.CellTemplate>
-                                <DataTemplate>
-                                    <CheckBox Margin="5, 0" IsChecked="{Binding IsSelected}" Checked="CheckBox_Checked_1" Unchecked="CheckBox_Unchecked"/>
-                                </DataTemplate>
-                            </GridViewColumn.CellTemplate>
-                        </GridViewColumn>
-                        <GridViewColumn Header="Name">
-                            <GridViewColumn.CellTemplate>
-                                <DataTemplate>
-                                    <TextBlock Margin="5, 0" Text="{Binding name}"/>
-                                </DataTemplate>
-                            </GridViewColumn.CellTemplate>
-                        </GridViewColumn>
-                    </GridView>
-                </ListView.View>
-            </ListView>
+
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="24"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <StackPanel Orientation="Horizontal" Grid.Row="0">
+                    <Label x:Name="label" Content="Discovered Files in:" Height="38" Margin="1,0,0,0" Width="165" VerticalAlignment="Top" HorizontalAlignment="Left"/>
+                    <Label x:Name="lbl_current" Content="" Height="38" Margin="1,0,0,0" Width="165" VerticalAlignment="Top" HorizontalAlignment="Left"/>
+                </StackPanel>
+                
+                <TreeView 
+                    x:Name="tree"
+                    Grid.Row="1" 
+                    ItemContainerStyle="{StaticResource TreeViewItemStyle}"
+                    ItemsSource="{Binding Mode=OneWay}"
+                    ItemTemplate="{StaticResource CheckBoxItemTemplate}" Background="{x:Null}" BorderBrush="{x:Null}"
+                />
+            </Grid>
         </GroupBox>
         <DockPanel Height="30" VerticalAlignment="Bottom">
             <StatusBar DockPanel.Dock="Bottom">
@@ -100,8 +135,6 @@ Margin="5,31,5,5" Grid.RowSpan="2">
                 </StatusBarItem>
             </StatusBar>
         </DockPanel>
-        <Label x:Name="label" Content="Discovered Files in:" HorizontalAlignment="Left" Height="38" Margin="1,46,0,0" VerticalAlignment="Top" Width="165"/>
-        <Label x:Name="lbl_filename" HorizontalAlignment="Left" Height="31" Margin="125,46,0,0" VerticalAlignment="Top" Width="158"/>
         <GroupBox x:Name="groupBox_Copy" Header="Settings" HorizontalAlignment="Left" Height="172" Margin="343,23,0,0" VerticalAlignment="Top" Width="159">
             <ComboBox x:Name="cmbox_ratio" HorizontalAlignment="Left" Margin="97,62,-2,0" VerticalAlignment="Top" Width="52" IsEditable="False"  
                       IsReadOnly ="True" Text="Set Scale" SelectionChanged="comboBox_SelectionChanged">
@@ -118,7 +151,7 @@ Margin="5,31,5,5" Grid.RowSpan="2">
         </GroupBox>
 
         <CheckBox x:Name="checkBox_Optimize" Content="Optimize Build" HorizontalAlignment="Left" Height="26" Margin="354,46,0,0" VerticalAlignment="Top" Width="108" IsChecked="True"/>
-        <CheckBox x:Name="checkBox_Paint" Content="Ignore Paint" HorizontalAlignment="Left" Height="26" Margin="354,72,0,0" VerticalAlignment="Top" Width="108" IsChecked="False"/>
+        <CheckBox x:Name="checkBox_Paint" Content="Ignore Paint" HorizontalAlignment="Left" Height="26" Margin="354,72,0,0" VerticalAlignment="Top" Width="108" IsChecked="False" Checked="checkBox_Paint_Checked"/>
         <GroupBox x:Name="groupBox1" Header="Verbose" HorizontalAlignment="Left" Height="178" Margin="343,200,0,0" VerticalAlignment="Top" Width="159"/>
         <Label x:Name="label2" Content="Translation Ratio:" HorizontalAlignment="Left" Margin="343,98,0,0" VerticalAlignment="Top"/>
 

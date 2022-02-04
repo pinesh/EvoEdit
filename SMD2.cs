@@ -5,29 +5,30 @@ using System.Linq;
 using System.Windows.Documents;
 using System.Windows.Media;
 using ICSharpCode.SharpZipLib.Zip.Compression.Streams;
+using testapp1;
 
 namespace EvoEditApp
 {
 
     public class Smd2
     {
-        private readonly int _blocks_in_a_line_in_a_segment;
-        private readonly int _segments_in_a_line_of_a_region;
-        private BlockList _block_list;
-        private int scale;
-        private readonly Dictionary<int, SmdRegion> position_to_region;
+        private readonly int _blocksInALineInASegment;
+        private readonly int _segmentsInALineOfARegion;
+        private BlockList _blockList;
+        private int _scale;
+        private readonly Dictionary<int, SmdRegion> _positionToRegion;
 
-        public Smd2(int segments_in_a_line_of_a_region = 16, int blocks_in_a_line_of_a_segment = 16,int s = 1)
+        public Smd2(int segmentsInALineOfARegion = 16, int blocksInALineOfASegment = 16,int s = 1)
         {
-            this._blocks_in_a_line_in_a_segment = blocks_in_a_line_of_a_segment;
-            this._segments_in_a_line_of_a_region = segments_in_a_line_of_a_region;
-            this.position_to_region = new Dictionary<int, SmdRegion>();
-            this._block_list = new BlockList();
-            this.scale = s;
+            this._blocksInALineInASegment = blocksInALineOfASegment;
+            this._segmentsInALineOfARegion = segmentsInALineOfARegion;
+            this._positionToRegion = new Dictionary<int, SmdRegion>();
+            this._blockList = new BlockList();
+            this._scale = s;
         }
         public BlockList GetBlockList()
         {
-            return _block_list;
+            return _blockList;
         }
 
 
@@ -67,45 +68,45 @@ namespace EvoEditApp
                 return;
             }
             //assert len(file_list) > 0, "No smd files found"
-            var smd_region = new SmdRegion(s:scale);
-            foreach (var file_name in fileList)
+            var smdRegion = new SmdRegion(s:_scale);
+            foreach (var fileName in fileList)
             {
-                if (file_name.Extension != ".smd2")
+                if (fileName.Extension != ".smd2")
                 {
-                    throw new Exception($"Unexpected file extension format {file_name.Extension}");
+                    throw new Exception($"Unexpected file extension format {fileName.Extension}");
                 }
-                smd_region.read(file_name, this._block_list);
+                smdRegion.Read(fileName, this._blockList);
             }
 
         }
 
         private class SmdRegion
         {
-            private readonly int _blocks_in_a_line_in_a_segment;
-            private readonly int _segments_in_a_line;
-            private readonly int _segments_in_an_area;
-            private readonly int _segments_in_a_cube;
-            private readonly int _segment_header_size;
-            private readonly int scale;
+            private readonly int _blocksInALineInASegment;
+            private readonly int _segmentsInALine;
+            private readonly int _segmentsInAnArea;
+            private readonly int _segmentsInACube;
+            private readonly int _segmentHeaderSize;
+            private readonly int _scale;
             private Tuple<int, int, int, int> _version;
-            private Dictionary<Tuple<int>, SmdSegment> _position_to_segment;
-            public SmdRegion(int segments_in_a_line = 16, int blocks_in_a_line = 16,int s = 1)
+            private Dictionary<Tuple<int>, SmdSegment> _positionToSegment;
+            public SmdRegion(int segmentsInALine = 16, int blocksInALine = 16,int s = 1)
             {
-                this._blocks_in_a_line_in_a_segment = blocks_in_a_line;
-                this._segments_in_a_line = segments_in_a_line;
-                this._segments_in_an_area = this._segments_in_a_line * this._segments_in_a_line;
-                this._segments_in_a_cube = this._segments_in_an_area * this._segments_in_a_line;
+                this._blocksInALineInASegment = blocksInALine;
+                this._segmentsInALine = segmentsInALine;
+                this._segmentsInAnArea = this._segmentsInALine * this._segmentsInALine;
+                this._segmentsInACube = this._segmentsInAnArea * this._segmentsInALine;
                 this._version = new Tuple<int, int, int, int>(0, 0, 0, 0);
-                this._position_to_segment = new Dictionary<Tuple<int>, SmdSegment>();
-                this._segment_header_size = 26;
-                this.scale = s;
+                this._positionToSegment = new Dictionary<Tuple<int>, SmdSegment>();
+                this._segmentHeaderSize = 26;
+                this._scale = s;
                 if (this._version.Item4 == 0)
                 {
-                    this._segment_header_size = 25;
+                    this._segmentHeaderSize = 25;
                 }
             }
 
-            private static bool _isEOF(SMBinary s)
+            private static bool _isEOF(SmBinary s)
             {
                 if (s.BaseStream.Position < s.BaseStream.Length)
                     return true;
@@ -113,184 +114,169 @@ namespace EvoEditApp
                 return false;
             }
 
-            private Tuple<int, int> _read_segment_index(SMBinary s)
+            private Tuple<int, int> _read_segment_index(SmBinary s)
             {
                 var indentifier = s.ReadInt32(true);
                 var size = s.ReadInt32(true);
                 return new Tuple<int, int>(indentifier, size);
             }
 
-            private Dictionary<int, int> _read_region_header(SMBinary s)
+            private Dictionary<int, int> _read_region_header(SmBinary s)
             {
 
                 //this._version = //
                 this._version = s.read_vector_4_byte();
-                var segment_id_to_size = new Dictionary<int, int>();
-                for (var i = 0; i < this._segments_in_a_cube; i++)
+                var segmentIdToSize = new Dictionary<int, int>();
+                for (var i = 0; i < this._segmentsInACube; i++)
                 {
                     this._read_segment_index(s).Deconstruct(out int identifier, out int size);
                     if (identifier == -1) continue;
-                    segment_id_to_size[identifier] = size;
+                    segmentIdToSize[identifier] = size;
                 }
 
-                for (var i = 0; i < this._segments_in_a_cube; i++)
+                for (var i = 0; i < this._segmentsInACube; i++)
                 {
                     s.ReadUInt64();
                 }
 
-                return segment_id_to_size;
+                return segmentIdToSize;
             }
 
-            private void _read_file(BlockList block_list, SMBinary s)
+            private void _read_file(BlockList blockList, SmBinary s)
             {
-                var segment_id_to_size = this._read_region_header(s);
-                var segment_id = -1;
-                var segement = new SmdSegment(this._version.Item4, this._blocks_in_a_line_in_a_segment,scale);
+                var segmentIdToSize = this._read_region_header(s);
+                var segmentId = -1;
+                var segement = new SmdSegment(this._version.Item4, this._blocksInALineInASegment,_scale);
                 while (_isEOF(s))
                 {
-                    segment_id += 1;
-                    if (!segment_id_to_size.ContainsKey(segment_id))
+                    segmentId += 1;
+                    if (!segmentIdToSize.ContainsKey(segmentId))
                     {
                         s.BaseStream.Seek(5120, SeekOrigin.Current);
                         continue;
                     }
-                    if (segment_id_to_size[segment_id] == 0)
+                    if (segmentIdToSize[segmentId] == 0)
                     {
                         s.BaseStream.Seek(5120, SeekOrigin.Current);
                         continue;
                     }
 
-                    segement.read(block_list, s);
+                    segement.Read(blockList, s);
 
                 }
             }
 
-            public void read(FileInfo file, BlockList block_list)
+            public void Read(FileInfo file, BlockList blockList)
             {
                 Console.WriteLine($"Reading file {file.Name}");
                 using (FileStream f = new FileStream(file.FullName, FileMode.Open))
                 {
-                    this._read_file(block_list, new SMBinary(f));
+                    this._read_file(blockList, new SmBinary(f));
                     Console.WriteLine("read1");
                 }
             }
 
             private class SmdSegment
             {
-                private int _blocks_in_a_line;
-                private int _blocks_in_an_area;
-                private int _blocks_in_a_cube;
-                private int _region_version;
+                private int _blocksInALine;
+                private int _blocksInAnArea;
+                private int _blocksInACube;
+                private int _regionVersion;
                 private int _version;
                 private ulong _timestamp;
                 private Vector3i _position;
-                private bool has_valid_data;
-                private uint _compressed_size;
-                private int _header_size;
-                private readonly int _data_size;
-                private readonly int scale;
+                private bool _hasValidData;
+                private uint _compressedSize;
+                private int _headerSize;
+                private readonly int _dataSize;
+                private readonly int _scale;
 
-                public SmdSegment(int version, int blocks_in_a_line = 16,int s = 1)
+                public SmdSegment(int version, int blocksInALine = 16,int s = 1)
                 {
-                    this._blocks_in_a_line = blocks_in_a_line;
-                    this._blocks_in_an_area = this._blocks_in_a_line * this._blocks_in_a_line;
-                    this._blocks_in_a_cube = this._blocks_in_an_area * this._blocks_in_a_line;
-                    this._region_version = version;
+                    this._blocksInALine = blocksInALine;
+                    this._blocksInAnArea = this._blocksInALine * this._blocksInALine;
+                    this._blocksInACube = this._blocksInAnArea * this._blocksInALine;
+                    this._regionVersion = version;
                     this._version = 0;
                     this._timestamp = 0;
                     this._position = null;
-                    this.has_valid_data = false;
-                    this._compressed_size = 0;
-                    this.scale = (int)(4*Math.Pow(2,s));
+                    this._hasValidData = false;
+                    this._compressedSize = 0;
+                    this._scale = (int)(4*Math.Pow(2,s));
                     // this.block_index_to_block = { }
-                    this._header_size = 26;
-                    if (this._region_version == 0)
+                    this._headerSize = 26;
+                    if (this._regionVersion == 0)
                     {
-                        this._header_size = 25;
+                        this._headerSize = 25;
                     }
-                    this._data_size = 5120 - this._header_size;
+                    this._dataSize = 5120 - this._headerSize;
                 }
-                public static byte[] DecompressZlib(Stream source)
+                
+                private void _read_header(SmBinary s)
                 {
-                    byte[] result = null;
-                    using (MemoryStream outStream = new MemoryStream())
-                    {
-                        using (InflaterInputStream inf = new InflaterInputStream(source))
-                        {
-                            inf.CopyTo(outStream);
-                        }
-                        result = outStream.ToArray();
-                    }
-                    return result;
-                }
-                private void _read_header(SMBinary s)
-                {
-                    if (this._region_version != 0)
+                    if (this._regionVersion != 0)
                         this._version = Math.Abs((int)(((int)s.ReadByte()) - Math.Pow(2, 8)));
                     //this._version = Math.Abs((int)s.ReadByte());
                     this._timestamp = s.ReadUInt64();
                     this._position = s.read_vector_3_int32();
-                    this.has_valid_data = s.ReadBoolean();
-                    this._compressed_size = s.ReadUInt32();
+                    this._hasValidData = s.ReadBoolean();
+                    this._compressedSize = s.ReadUInt32();
+                }
 
-                }
-                private void _read_block_data(BlockList block_list, SMBinary s)
+                private void _read_block_data(BlockList blockList, SmBinary s)
                 {
-                 
-                    var decompressed_data = DecompressZlib(new MemoryStream(s.ReadBytes((int)this._compressed_size)));//TODO MIGHT BREAK
-                    int i = 0;
-                    for (int index = 0; index < (int)(decompressed_data.Length / 3); index++)
+                    try
                     {
-                        var pos = index * 3;
-                        byte[] padded = new byte[3];
-                        Array.Copy(decompressed_data, pos, padded, 0, 3);
-                        var int_24 = this.toUnsignedInt(padded);
-                        if (int_24 == 0) continue;
-                        BlockBit block = new BlockBit(int_24, this._version);
-                        if (!BlockTypes.isAnyHull((short)block.get_id()))
+                        var decompressedData =
+                            SmBinary.DecompressZlib(new MemoryStream(s.ReadBytes((int)this._compressedSize)));
+                        for (int index = 0; index < (int)(decompressedData.Length / 3); index++)
                         {
-                            continue;
+                            var pos = index * 3;
+                            byte[] padded = new byte[3];
+                            Array.Copy(decompressedData, pos, padded, 0, 3);
+                            var int24 = SmBinary.ToUnsignedInt(padded);
+                            if (int24 == 0) continue;
+                            BlockBit block = new BlockBit(int24, this._version);
+                            if (!BlockTypes.IsAnyHull((short)block.get_id()))
+                            {
+                                continue;
+                            }
+
+                            blockList.Blist.Add(get_block_position_by_block_index(index), block);
                         }
-                        i++;
-                        block_list.blist.Add(get_block_position_by_block_index(index), block);
                     }
-                    Console.WriteLine($"found{i} blocks in segment");
-                    s.BaseStream.Seek(this._data_size - this._compressed_size, SeekOrigin.Current);
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(@"Decompression Failed, skipping Sector");
+                    }
+                    finally
+                    {
+                        s.BaseStream.Seek(this._dataSize - this._compressedSize, SeekOrigin.Current);
+                    }
                 }
-                public void read(BlockList block_list, SMBinary s)
+
+                public void Read(BlockList blockList, SmBinary s)
                 {
                     this._read_header(s);
-                    if (!has_valid_data)
+                    if (!_hasValidData)
                     {
-                        s.BaseStream.Seek(this._data_size, SeekOrigin.Current);
+                        s.BaseStream.Seek(this._dataSize, SeekOrigin.Current);
                     }
                     else
                     {
-                        this._read_block_data(block_list, s);
+                        this._read_block_data(blockList, s);
                     }
-                    if (this.has_valid_data && block_list.blist.Count == 0)
-                        this.has_valid_data = false;
+                    if (this._hasValidData && blockList.Blist.Count == 0)
+                        this._hasValidData = false;
                 }
 
-                public int toUnsignedInt(byte[] bytes)
+                private Vector3i get_block_position_by_block_index(int blockIndex)
                 {
-                    return toUnsignedInt(bytes, 0, bytes.Length);
-                }
-                public int toUnsignedInt(byte[] bytes, int o, int l)
-                {
-                    long v = 0;
-                    for (int i = 0; i < l; i++)
-                        v = (v << 8) | (uint)(bytes[o + i] & 0xff);
-                    return (int)v;
-                }
-
-                public Vector3i get_block_position_by_block_index(int block_index)
-                {
-                    var z = (int)(block_index / this._blocks_in_an_area);
-                    var rest = block_index % this._blocks_in_an_area;
-                    var y = (int)(rest / this._blocks_in_a_line);
-                    var x = rest % this._blocks_in_a_line;
-                    return new Vector3i(-(x + _position.x)*scale, (y + _position.y) * scale, (z + _position.z) * scale);
+                    var z = (int)(blockIndex / this._blocksInAnArea);
+                    var rest = blockIndex % this._blocksInAnArea;
+                    var y = (int)(rest / this._blocksInALine);
+                    var x = rest % this._blocksInALine;
+                    return new Vector3i(-(x + _position.X)*_scale, (y + _position.Y) * _scale, (z + _position.Z) * _scale);
                 }
             }
         }

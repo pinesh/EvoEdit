@@ -102,6 +102,8 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="BlockTypes.cs" />
+    <Compile Include="FooViewModel.cs" />
     <Compile Include="merge.cs" />
     <Compile Include="save.cs" />
     <Compile Include="SMD2.cs" />

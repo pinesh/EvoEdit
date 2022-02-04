@@ -40,7 +40,7 @@ namespace EvoEditApp
         {
             get
             {
-                return new Vector3((float)this.gridPosition.x / 32f, (float)this.gridPosition.y / 32f, (float)this.gridPosition.z / 32f);
+                return new Vector3((float)this.gridPosition.X / 32f, (float)this.gridPosition.Y / 32f, (float)this.gridPosition.Z / 32f);
             }
         }
 

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.ComponentModel;
 using System.Linq;
 using System.Net.Sockets;
 using System.Numerics;
@@ -11,36 +12,50 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Documents;
 using System.Windows.Media;
+using testapp1;
 
 namespace EvoEditApp
 {
-    public class mergenew
-    {
-        public Dictionary<Vector3i, BlockBit> master;
-        public List<mblocks> mblist;
-        private SortedDictionary<Vector3i, BlockBit> ok;
-        public Vector3i max;
-        public Vector3i min;
-        public int scale;
+    public class Mergenew : INotifyPropertyChanged
+    { 
+        public Dictionary<Vector3i, BlockBit> Master;
+        public List<Mblocks> Mblist;
+        private SortedDictionary<Vector3i, BlockBit> _ok;
+        public Vector3i Max;
+        public Vector3i Min;
+        public int Scale;
 
-        public mergenew(Dictionary<Vector3i, BlockBit> l,  Vector3i u, Vector3i v , int s = 1)
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected void NotifyPropertyChanged(String info)
         {
-            ok = new SortedDictionary<Vector3i, BlockBit>(new Vector3icompare());
-            master = l;
-            this.min = u;
-            this.max = v;
-            this.scale = (int)(4 * Math.Pow(2, s));
-            mblist = new List<mblocks>();
-            Console.WriteLine(master.Count);
-            Console.WriteLine($"min = [{min.x},{min.y},{min.z}]");
-            Console.WriteLine($"max = [{max.x},{max.y},{max.z}]");
+            OnPropertyChanged(new PropertyChangedEventArgs(info));
+        }
+        protected void OnPropertyChanged(PropertyChangedEventArgs e)
+        {
+            PropertyChangedEventHandler handler = PropertyChanged;
+            if (handler != null)
+                handler(this, e);
+        }
+
+        public Mergenew(Dictionary<Vector3i, BlockBit> l,  Vector3i u, Vector3i v , int s = 1)
+        {
+            _ok = new SortedDictionary<Vector3i, BlockBit>(new Vector3icompare());
+            Master = l;
+            this.Min = u;
+            this.Max = v;
+            this.Scale = (int)(4 * Math.Pow(2, s));
+            Mblist = new List<Mblocks>();
+            Console.WriteLine(Master.Count);
+            Console.WriteLine($"min = [{Min.X},{Min.Y},{Min.Z}]");
+            Console.WriteLine($"max = [{Max.X},{Max.Y},{Max.Z}]");
         }
         
         public Tuple<ushort,Vector3i> get_scale_wedge(Vector3i start, Vector3i end,int rot)
         {
-            int x = Math.Abs(start.x - end.x) / scale;
-            int y = Math.Abs(start.y - end.y) / scale;
-            int z = Math.Abs(start.z - end.z) / scale;
+            int x = Math.Abs(start.X - end.X) / Scale;
+            int y = Math.Abs(start.Y - end.Y) / Scale;
+            int z = Math.Abs(start.Z - end.Z) / Scale;
             int offset = Math.Max(x, Math.Max(y, z))*4;
             switch (rot)
             {
@@ -88,7 +103,7 @@ namespace EvoEditApp
 
         public ushort get_scale(Vector3i start, Vector3i end)
         {
-            return range_to_scale(Math.Abs(start.x - end.x)/scale, Math.Abs(start.y - end.y) / scale, Math.Abs(start.z - end.z) / scale);
+            return range_to_scale(Math.Abs(start.X - end.X)/Scale, Math.Abs(start.Y - end.Y) / Scale, Math.Abs(start.Z - end.Z) / Scale);
         }
         public ushort range_to_scale(int x,int y,int z)
         {
@@ -119,29 +134,29 @@ namespace EvoEditApp
                 }
 
                 //easy lower y is always smaller
-                if (x.y < y.y)
+                if (x.Y < y.Y)
                 {
                     return -1;
                 }
 
-                if (x.y > y.y)
+                if (x.Y > y.Y)
                 {
                     return 1;
                 }
                 //order on same y plane
 
                 
-                if (x.z < y.z)
+                if (x.Z < y.Z)
                 {
                     return -1;
                 }
-                if (x.z > y.z)
+                if (x.Z > y.Z)
                 {
                     return 1;
                 }
 
                 //we want least x first
-                if (x.x < y.x)
+                if (x.X < y.X)
                 {
                     return -1;
                 }
@@ -151,50 +166,59 @@ namespace EvoEditApp
                 }
             }
         }
-        public void merge()
+        public void Merge()
         {
-            var startpos = min;
-            if (startpos.x % scale != 0)
+            var startpos = Min;
+            if (startpos.X % Scale != 0)
             {
-                startpos.x -= startpos.x % scale;
+                startpos.X -= startpos.X % Scale;
             }
-            if (startpos.y % scale != 0)
+            if (startpos.Y % Scale != 0)
             {
-                startpos.y -= startpos.y % scale;
+                startpos.Y -= startpos.Y % Scale;
             }
-            if (startpos.z % scale != 0)
+            if (startpos.Z % Scale != 0)
             {
-                startpos.z -= startpos.z % scale;
+                startpos.Z -= startpos.Z % Scale;
             }
-            ok = new SortedDictionary<Vector3i, BlockBit>(new Vector3icompare());
-            foreach (var keypair in master)
+            _ok = new SortedDictionary<Vector3i, BlockBit>(new Vector3icompare());
+            foreach (var keypair in Master)
             {
-                ok.Add(keypair.Key,keypair.Value);
+                _ok.Add(keypair.Key,keypair.Value);
             }
-            min = startpos;
-
-            List<Vector3i> keys = ok.Keys.ToList();
+            Min = startpos;
+            
+           
+            List<Vector3i> keys = _ok.Keys.ToList();
+            int cur = 0;
             foreach (var key in keys)
             {
-                if (!master.ContainsKey(key)) continue;
+                cur += 1;
+                int m = Master.Count;
+                if (cur % 100 == 0)
+                {
+                    NotifyPropertyChanged($"Optimized: {cur}/{m} Blocks");
+                }
+                if (!Master.ContainsKey(key)) continue;
                 findOne(key);
             }
-            Console.WriteLine($"reduced to {mblist.Count}");
+
+            Console.WriteLine($"reduced to {Mblist.Count}");
         }
 
-        public List<Vector3i> getAllPoints(Vector3i start, Vector3i end, int type,int r)
+        public List<Vector3i> GetAllPoints(Vector3i start, Vector3i end, int type,int r)
         {
             List<Vector3i> points = new List<Vector3i>();
-            for (int yIndex = start.y; yIndex <= end.y; yIndex += scale)
+            for (int yIndex = start.Y; yIndex <= end.Y; yIndex += Scale)
             {
                 //z
-                for (int zIndex = start.z ; zIndex <= end.z; zIndex += scale)
+                for (int zIndex = start.Z ; zIndex <= end.Z; zIndex += Scale)
                 {
                     //x
-                    for (int xIndex = start.x; xIndex <= end.x; xIndex += scale)
+                    for (int xIndex = start.X; xIndex <= end.X; xIndex += Scale)
                     {
                         var v = new Vector3i(xIndex, yIndex, zIndex);
-                        if (!comp(v, type, r)) return points;
+                        if (!Comp(v, type, r)) return points;
                         points.Add(v);
                     }
                 }
@@ -203,7 +227,7 @@ namespace EvoEditApp
         }
         public void findOne(Vector3i start)
         {
-            var b = master[start];
+            var b = Master[start];
             //all blocks in merge must have same rotation and blockid.
 
             //to handle wedges and corners, we only want a singular merge direction, if we get an list bigger than one, we return.
@@ -213,27 +237,27 @@ namespace EvoEditApp
 
             if (style != 196 && style != 197)
             {
-                mblocks non = new mblocks
+                Mblocks non = new Mblocks
                 {
-                    startpos = start,
-                    endpos = start,
-                    type = type,
-                    rot = r
+                    Startpos = start,
+                    Endpos = start,
+                    Type = type,
+                    Rot = r
                 };
-                mblist.Add(non);
-                master.Remove(start);
+                Mblist.Add(non);
+                Master.Remove(start);
                 return;
             }
             List<Vector3i> mastlist = new List<Vector3i>();
-            int max = 16 * scale;
+            int max = 16 * Scale;
             var u = start;
             //loop through every key.
             //y
             int c = 0;
             while (c < 16)
             {
-                List<Vector3i> lv = getAllPoints(new Vector3i(start.x + (scale * c), start.y, start.z),
-                    new Vector3i(u.x + (scale * c), u.y, u.z), type, r);
+                List<Vector3i> lv = GetAllPoints(new Vector3i(start.X + (Scale * c), start.Y, start.Z),
+                    new Vector3i(u.X + (Scale * c), u.Y, u.Z), type, r);
                 if (mastlist.Count + lv.Count > c)
                 {
                     mastlist.AddRange(lv);
@@ -250,18 +274,18 @@ namespace EvoEditApp
             //we have wedges done.
             if (style == 197 && xcount != 0)
             {
-                mblocks zm = new mblocks
+                Mblocks zm = new Mblocks
                 {
-                    startpos = start,
-                    endpos = new Vector3i(u.x + (scale * xcount), u.y, u.z),
-                    type = type,
-                    rot = r
+                    Startpos = start,
+                    Endpos = new Vector3i(u.X + (Scale * xcount), u.Y, u.Z),
+                    Type = type,
+                    Rot = r
                 };
-                mblist.Add(zm);
+                Mblist.Add(zm);
 
                 foreach (var v in mastlist)
                 {
-                    master.Remove(v);
+                    Master.Remove(v);
                 }
 
                 return;
@@ -270,8 +294,8 @@ namespace EvoEditApp
             c = 1;
             while (c < 16)
             {
-                List<Vector3i> lv = getAllPoints(new Vector3i(start.x, start.y, start.z + (scale * (c))),
-                    new Vector3i(u.x + (scale * xcount), u.y, u.z + (scale * c)), type, r);
+                List<Vector3i> lv = GetAllPoints(new Vector3i(start.X, start.Y, start.Z + (Scale * (c))),
+                    new Vector3i(u.X + (Scale * xcount), u.Y, u.Z + (Scale * c)), type, r);
                 if (mastlist.Count + lv.Count == (xcount+1)*(c+1))
                 {
                     mastlist.AddRange(lv);
@@ -287,18 +311,18 @@ namespace EvoEditApp
             //we have wedges done.
             if (style == 197 && zcount != 0)
             {
-                mblocks zm = new mblocks
+                Mblocks zm = new Mblocks
                 {
-                    startpos = start,
-                    endpos = new Vector3i(u.x + (scale * xcount), u.y, u.z + (scale * zcount)),
-                    type = type,
-                    rot = r
+                    Startpos = start,
+                    Endpos = new Vector3i(u.X + (Scale * xcount), u.Y, u.Z + (Scale * zcount)),
+                    Type = type,
+                    Rot = r
                 };
-                mblist.Add(zm);
+                Mblist.Add(zm);
 
                 foreach (var v in mastlist)
                 {
-                    master.Remove(v);
+                    Master.Remove(v);
                 }
 
                 return;
@@ -306,8 +330,8 @@ namespace EvoEditApp
             c = 1;
             while (c < 16)
             {
-                List<Vector3i> lv = getAllPoints(new Vector3i(start.x, start.y + (scale * (c)), start.z),
-                    new Vector3i(u.x + (scale * xcount), u.y + (scale * c), u.z + (scale * zcount)),
+                List<Vector3i> lv = GetAllPoints(new Vector3i(start.X, start.Y + (Scale * (c)), start.Z),
+                    new Vector3i(u.X + (Scale * xcount), u.Y + (Scale * c), u.Z + (Scale * zcount)),
                     type, r);
                 
                 if (mastlist.Count + lv.Count == (c+1)*(xcount+1)*(zcount+1))
@@ -322,34 +346,34 @@ namespace EvoEditApp
             }
 
             //every point in this list becomes an mblock. 
-            mblocks m = new mblocks
+            Mblocks m = new Mblocks
             {
-                startpos = start,
-                endpos = new Vector3i(u.x + (scale * xcount), u.y + (scale * (c-1)), u.z + (scale * zcount)),
-                type = type,
-                rot = r
+                Startpos = start,
+                Endpos = new Vector3i(u.X + (Scale * xcount), u.Y + (Scale * (c-1)), u.Z + (Scale * zcount)),
+                Type = type,
+                Rot = r
             };
-            mblist.Add(m);
+            Mblist.Add(m);
             
             foreach (var v in mastlist)
             {
-                master.Remove(v);
+                Master.Remove(v);
             }
            
 
         }
-        public bool comp(Vector3i c,int type, int rot)
+        public bool Comp(Vector3i c,int type, int rot)
         {
-            if (!master.ContainsKey(c)) return false;
-            return master[c].get_Sevo_rot() == rot && master[c].get_id() == type;
+            if (!Master.ContainsKey(c)) return false;
+            return Master[c].get_Sevo_rot() == rot && Master[c].get_id() == type;
         }
 
-        public struct mblocks
+        public struct Mblocks
         {
-            public Vector3i startpos;
-            public Vector3i endpos;
-            public int type;
-            public int rot;
+            public Vector3i Startpos;
+            public Vector3i Endpos;
+            public int Type;
+            public int Rot;
 
         }
     }

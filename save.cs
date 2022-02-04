@@ -11,43 +11,43 @@ namespace EvoEditApp
     public class ParentEntity
     {
     
-        private BrickEntity_mp srcdata;
+        private BrickEntityMp _srcdata;
 
-        public ParentEntity(BrickEntity_mp src)
+        public ParentEntity(BrickEntityMp src)
         {
-            srcdata = src;
+            _srcdata = src;
         }
 
         public void Append(BrickDatasSave b)
         {
-            srcdata.brickDatas = b;
+            _srcdata.BrickDatas = b;
         }
         // Token: 0x17000420 RID: 1056
         // (get) Token: 0x060014D2 RID: 5330 RVA: 0x00072959 File Offset: 0x00070B59
-        public BrickEntity_mp GetMessagePack()
+        public BrickEntityMp GetMessagePack()
         {
             return GetSave(this);
         }
 
         // Token: 0x060012D6 RID: 4822 RVA: 0x000689EC File Offset: 0x00066BEC
-        public static BrickEntity_mp GetSave(ParentEntity parent)
+        public static BrickEntityMp GetSave(ParentEntity parent)
         {
-            parent.srcdata.SGUID = makeid();
-            return parent.srcdata;
+            parent._srcdata.Sguid = Makeid();
+            return parent._srcdata;
         }
 
-        private static readonly System.Random random = new System.Random();
+        private static readonly System.Random Random = new System.Random();
 
-        public static string makeid()
+        public static string Makeid()
         {
             DateTime d = new DateTime(2018, 1, 1, 8, 0, 0, DateTimeKind.Utc);
             double num = (double)(DateTime.UtcNow - d).Ticks;
             return string.Format("{0:X}", Convert.ToInt32(num % 2147483647.0)) + "-" +
-                   string.Format("{0:X}", random.Next(1000000));
+                   string.Format("{0:X}", Random.Next(1000000));
         }
         
         // Token: 0x06001537 RID: 5431 RVA: 0x000740C0 File Offset: 0x000722C0
-        public void SaveToDiskAtPath(string path, bool clearSGUID)
+        public void SaveToDiskAtPath(string path, bool clearSguid)
         {
             string directoryName = Path.GetDirectoryName(path);
             if (!Directory.Exists(directoryName))
@@ -70,13 +70,13 @@ namespace EvoEditApp
             byte[] array;
             try
             {
-                BrickEntity_mp messagePack = this.GetMessagePack();
-                if (clearSGUID)
+                BrickEntityMp messagePack = this.GetMessagePack();
+                if (clearSguid)
                 {
                     messagePack.ClearInstanceData();
                 }
                 // var lz4Options = MessagePackSerializerOptions.Standard.WithCompression(MessagePackCompression.Lz4Block);
-                array = LZ4MessagePackSerializer.Serialize<BrickEntity_mp>(messagePack);
+                array = LZ4MessagePackSerializer.Serialize<BrickEntityMp>(messagePack);
             }
             catch
             {

@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.ComponentModel.Design.Serialization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -14,6 +16,7 @@ using System.Xml;
 using Ionic.Zip;
 using Microsoft.Win32;
 using Ookii.Dialogs.Wpf;
+using testapp1;
 using Path = System.IO.Path;
 using ZipFile = Ionic.Zip.ZipFile;
 
@@ -25,41 +28,59 @@ namespace EvoEditApp
     /// </summary>
     public partial class MainWindow : Window
     {
-        private int currentdirectories;
-        private string temppath;
-        private int scale;
-        private int jobs;
-        private string globaldestinationpath;
+        private int _currentdirectories;
+        private string _temppath;
+        private int _scale;
+        private int _jobs;
+        private string _globaldestinationpath;
+        private FooViewModel root;
+
         public MainWindow()
         {
             InitializeComponent();
-            CreateCheckBoxList(); this.DataContext = this;
-            temppath = "";
-            globaldestinationpath = @"";
+
+            _temppath = "";
+            _globaldestinationpath = @"";
             SetProgress(0, "");
             check_output_path();
+            root = this.tree.Items[0] as FooViewModel;
+            root.PropertyChanged += UpdateCount;
+            base.CommandBindings.Add(
+                new CommandBinding(
+                    ApplicationCommands.Undo,
+                    (sender, e) => // Execute
+                    {
+                        e.Handled = true;
+                        root.IsChecked = false;
+                        this.tree.Focus();
+                    },
+                    (sender, e) => // CanExecute
+                    {
+                        e.Handled = true;
+                        e.CanExecute = (root.IsChecked != false);
+                    }));
 
-
+           // this.tree.Focus();
         }
 
         private void prompt_path()
         {
-            if (MessageBox.Show("You haven't set an output folder, would you like to do so now?",
-                    "Set output path",
+            if (MessageBox.Show("You have not set an output folder, would you like to do so now?",
+                    "Set output folder",
                     MessageBoxButton.YesNo,
                     MessageBoxImage.Warning) == MessageBoxResult.Yes)
             {
-                setpath(); // Do something here
+                Setpath(); // Do something here
             }
         }
 
-        private void setpath()
+        private void Setpath()
         {
             var ookiiDialog = new VistaFolderBrowserDialog();
             if (ookiiDialog.ShowDialog() == true)
             {
-                globaldestinationpath = ookiiDialog.SelectedPath;
-                CurrentFolder.Text = new StringBuilder("Output: ").Append(globaldestinationpath).ToString();
+                _globaldestinationpath = ookiiDialog.SelectedPath;
+                CurrentFolder.Text = new StringBuilder("Output: ").Append("Set").ToString();
                 write_output_path();
             }
         }
@@ -73,8 +94,12 @@ namespace EvoEditApp
                 {
                     XmlDocument doc = new XmlDocument();
                     doc.Load(p);
-                    globaldestinationpath = doc.InnerText;
-                    CurrentFolder.Text = new StringBuilder("Output: ").Append(globaldestinationpath).ToString();
+                    _globaldestinationpath = doc.InnerText;
+                    CurrentFolder.Text = new StringBuilder("Output: ").Append("Set").ToString();
+                    if (!new DirectoryInfo(_globaldestinationpath).Exists)
+                    {
+                        prompt_path();
+                    }
                 }
                 else
                 {
@@ -93,7 +118,7 @@ namespace EvoEditApp
             var p = Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location), "data.xml");
             var writer = new System.Xml.Serialization.XmlSerializer(typeof(String));
             var file = System.IO.File.Create(p);
-            writer.Serialize(file, globaldestinationpath);
+            writer.Serialize(file, _globaldestinationpath);
             file.Close();
         }
 
@@ -112,15 +137,14 @@ namespace EvoEditApp
                 
                 using (FileStream fs = File.OpenRead(openFileDlg.FileName))
                 {
-                   var x=  BrickEntity_mp.GetSaveFromFile(fs, true);
+                   var x=  BrickEntityMp.GetSaveFromFile(fs, true);
                    var s = new StringBuilder();
 
-                   foreach (var d in x.brickDatas.datas)
+                   foreach (var d in x.BrickDatas.Datas)
                    {
-                       s.AppendLine("["+ d.gridPosition.x+","+ d.gridPosition.y + ","+ d.gridPosition.z+"]");
+                       s.AppendLine("["+ d.gridPosition.X+","+ d.gridPosition.Y + ","+ d.gridPosition.Z+"]");
                    }
 
-                   //textBox.Text = s.ToString();
                 }
             }
         }
@@ -134,24 +158,17 @@ namespace EvoEditApp
         
         public class BoolStringClass
         {
-            public string name { get; set; }
-            public string path { get; set; }
+            public string Name { get; set; }
+            public string Path { get; set; }
             public bool IsSelected { get; set; }
-        }
-        public ObservableCollection<BoolStringClass> FileList { get; set; }
-        public void CreateCheckBoxList()
-        {
-            FileList = new ObservableCollection<BoolStringClass>();
-            MyListView.ItemsSource = FileList;
-            this.DataContext = this;
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            cleanup();
+            Cleanup();
         }
 
-        private void cleanup()
+        private void Cleanup()
         {
            
         }
@@ -160,8 +177,7 @@ namespace EvoEditApp
         private void comboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             var cm = (ComboBox)sender;
-            scale = cm.Items.IndexOf(cm.SelectedItem);
-            //scale = (int)Math.Pow(2, i);
+            _scale = cm.Items.IndexOf(cm.SelectedItem);
         }
 
         //this is the thread entry
@@ -169,33 +185,34 @@ namespace EvoEditApp
         {
             try
             {
-                var interval = Math.Abs(100 / jobs) / 3;
-                if (!new DirectoryInfo(globaldestinationpath).Exists)
+                var interval = Math.Abs(100 / _jobs) / 3;
+                if (!new DirectoryInfo(_globaldestinationpath).Exists)
                 {
                     throw new Exception("Path not valid");
                 }
-                var s = new SM_Load(scale);
+                var s = new SmLoad(_scale);
                 UpdateProgress(0, $"Reading:{name}");
                 s.Read(new DirectoryInfo(p));
                 UpdateProgress(interval, $"");
-                s.smd.get_min_max_vector().Deconstruct(out Vector3i min, out Vector3i max);
+                s.Smd.get_min_max_vector().Deconstruct(out Vector3i min, out Vector3i max);
                 if (optimize)
                 {
-                    var m = new mergenew(s.smd.getBlockList().blist, min, max, scale);
+                    var m = new Mergenew(s.Smd.GetBlockList().Blist, min, max, _scale);
+                    m.PropertyChanged += UpdateStateCount;
                     UpdateProgress(0, $"Optimizing:{name}");
-                    m.merge();
+                    m.Merge();
                     UpdateProgress(interval, "");
-                    var filename = new StringBuilder(name).Append("-" + Path.GetFileName(p)).Append(".sevo").ToString();
+                    var filename = new StringBuilder(getmultiname(p, name)).Append(".sevo").ToString();
                     UpdateProgress(0, $"Writing:{name}");
-                    WriteSevo(Path.Combine(globaldestinationpath, filename), m,scale);
+                    WriteSevo(Path.Combine(_globaldestinationpath, filename), m,_scale);
                     UpdateProgress(interval, $"");
                 }
                 else
                 {
                     UpdateProgress(interval, "");
-                    var filename = new StringBuilder(name).Append("-" + Path.GetFileName(p)).Append(".sevo").ToString();
+                    var filename = new StringBuilder(getmultiname(p,name)).Append(".sevo").ToString();
                     UpdateProgress(0, $"Writing:{name}");
-                    testport(Path.Combine(globaldestinationpath, filename), s.DumpData(),scale);
+                    Testport(Path.Combine(_globaldestinationpath, filename), s.DumpData(),_scale);
                     UpdateProgress(interval, $"");
                 }
             }
@@ -204,19 +221,42 @@ namespace EvoEditApp
                 Console.WriteLine($"Thread Abort Exception {e}");
                 MessageBox.Show($"Unable to import: {e.Message}", "Import error", MessageBoxButton.OK, MessageBoxImage.Error);
                 UpdateProgress(100, $"");
-                //throw new Exception(e.Message);
             }
             finally
             {
                 Console.WriteLine("Thread Finished");
-                UpdateProgress(0, $"");
+                UpdateJob();
             }
         }
 
+        private static string getmultiname(string path,string basename)
+        {
+            var d = new DirectoryInfo(path);
+            List<string> head = new List<string>();
+            try
+            {
+                while (d.Name != basename)
+                {
+                    head.Add(d.Name);
+                    d = d.Parent;
+                }
+                head.Add(d.Name);
+                head.Reverse();
+                var joinedNames = head.Aggregate((a, b) => a + "-" + b);
+                return joinedNames;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("failed to find directory this shouldn't have happened");
+                return "failed";
+            }
+
+          
+        }
 
         //port the unoptimized blueprint. 
-        private static void testport(string name,Dictionary<Vector3i,BlockBit> blocks,int scale)
-        { ;
+        private static void Testport(string name,Dictionary<Vector3i,BlockBit> blocks,int scale)
+        { 
             string strExeFilePath = System.Reflection.Assembly.GetExecutingAssembly().Location;
             string p = Path.Combine(Path.GetDirectoryName(strExeFilePath), "testentity.sevo");
 
@@ -226,11 +266,11 @@ namespace EvoEditApp
             }
             using (FileStream fs = File.OpenRead(p))
             {
-                var x = BrickEntity_mp.GetSaveFromFile(fs, true);
+                var x = BrickEntityMp.GetSaveFromFile(fs, true);
                 List<BrickInstanceData> d = new List<BrickInstanceData>();
                 // Launch OpenFileDialog by calling ShowDialog method
-                ParentEntity P = new ParentEntity(x);
-                    int i = x.brickDatas.datas.Length;
+                ParentEntity parent = new ParentEntity(x);
+                    int i = x.BrickDatas.Datas.Length;
                     int multiplier = (int)Math.Pow(2, scale);
                     foreach (KeyValuePair<Vector3i, BlockBit> newblock in blocks)
                     {
@@ -240,9 +280,9 @@ namespace EvoEditApp
                         {
                             scale = 0,
                             rotation = rot,
-                            gridPosition = newblock.Key +  multiplier* BlockOffsets.getOffsets(rot) + BlockOffsets.getScaleOffsets((byte)scale),
-                            brickId = (ushort)newblock.Value.GetSevoID(),
-                            color = (object)new object[] { paint.x, paint.y, paint.z, 255 },
+                            gridPosition = newblock.Key +  multiplier* BlockOffsets.GetOffsets(rot) + BlockOffsets.GetScaleOffsets((byte)scale),
+                            brickId = (ushort)newblock.Value.GetSevoId(),
+                            color = (object)new object[] { paint.X, paint.Y, paint.Z, 255 },
                             material = 0,
                             healthScore = 255,
                             gridSize = (byte)(scale),
@@ -252,17 +292,17 @@ namespace EvoEditApp
                     }
                     BrickDatasSave b = new BrickDatasSave()
                     {
-                        additionalDatas = x.brickDatas.additionalDatas,
-                        idsToRecycle = x.brickDatas.idsToRecycle,
-                        datas = x.brickDatas.datas.Concat(d).ToArray()
+                        AdditionalDatas = x.BrickDatas.AdditionalDatas,
+                        IdsToRecycle = x.BrickDatas.IdsToRecycle,
+                        Datas = x.BrickDatas.Datas.Concat(d).ToArray()
                     };
 
-                    P.Append(b);
-                    P.SaveToDiskAtPath(name, false);
+                    parent.Append(b);
+                    parent.SaveToDiskAtPath(name, false);
                     Console.WriteLine("Done");
             }
         }
-        private static void WriteSevo(string name,mergenew m,int scale)
+        private static void WriteSevo(string name,Mergenew m,int scale)
         {
             string strExeFilePath = System.Reflection.Assembly.GetExecutingAssembly().Location;
             string p = Path.Combine(Path.GetDirectoryName(strExeFilePath), "testentity.sevo");
@@ -273,25 +313,25 @@ namespace EvoEditApp
             }
             using (FileStream fs = File.OpenRead(p))
             {
-                var x = BrickEntity_mp.GetSaveFromFile(fs, true);
+                var x = BrickEntityMp.GetSaveFromFile(fs, true);
                 int multiplier = (int)Math.Pow(2, scale);
                 List<BrickInstanceData> d = new List<BrickInstanceData>();
-                ParentEntity P = new ParentEntity(x);
-                int i = x.brickDatas.datas.Length;
-                foreach (var newBlock in m.mblist)
+                ParentEntity parent = new ParentEntity(x);
+                int i = x.BrickDatas.Datas.Length;
+                foreach (var newBlock in m.Mblist)
                 {
                     Vector3i additional = new Vector3i(0, 0, 0);
-                    Vector3i paint = BlockTypes.Sevo_Paint((short)newBlock.type);
-                    byte rot = (byte)(sbyte)newBlock.rot;
-                    var s = (ushort)BlockTypes.Sevo_ID((short)newBlock.type);
-                    var sc = m.get_scale(newBlock.startpos, newBlock.endpos);
+                    Vector3i paint = BlockTypes.Sevo_Paint((short)newBlock.Type);
+                    byte rot = (byte)(sbyte)newBlock.Rot;
+                    var s = (ushort)BlockTypes.Sevo_ID((short)newBlock.Type);
+                    var sc = m.get_scale(newBlock.Startpos, newBlock.Endpos);
                     switch (s)
                     {
                         case 196:
                             rot = 0;
                             break;
                         case 197:
-                            m.get_scale_wedge(newBlock.startpos, newBlock.endpos, rot)
+                            m.get_scale_wedge(newBlock.Startpos, newBlock.Endpos, rot)
                                 .Deconstruct(out sc, out additional);
                             break;
                     }
@@ -299,9 +339,9 @@ namespace EvoEditApp
                     {
                         scale = sc,
                         rotation = rot,
-                        gridPosition = newBlock.startpos + multiplier*BlockOffsets.getOffsets(rot) + multiplier* additional + BlockOffsets.getScaleOffsets((byte)scale),
-                        brickId = (ushort)BlockTypes.Sevo_ID((short)newBlock.type),
-                        color = (object)new object[] { paint.x, paint.y, paint.z, 255 },
+                        gridPosition = newBlock.Startpos + multiplier*BlockOffsets.GetOffsets(rot) + multiplier* additional + BlockOffsets.GetScaleOffsets((byte)scale),
+                        brickId = (ushort)BlockTypes.Sevo_ID((short)newBlock.Type),
+                        color = (object)new object[] { paint.X, paint.Y, paint.Z, 255 },
                         material = 0,
                         healthScore = 255,
                         gridSize = (byte)(scale),
@@ -311,16 +351,50 @@ namespace EvoEditApp
                 }
                 BrickDatasSave b = new BrickDatasSave()
                 {
-                    additionalDatas = x.brickDatas.additionalDatas,
-                    idsToRecycle = x.brickDatas.idsToRecycle,
-                    datas = x.brickDatas.datas.Take(3).Concat(d).ToArray()
+                    AdditionalDatas = x.BrickDatas.AdditionalDatas,
+                    IdsToRecycle = x.BrickDatas.IdsToRecycle,
+                    Datas = x.BrickDatas.Datas.Take(3).Concat(d).ToArray()
                 };
 
-                P.Append(b);
-                P.SaveToDiskAtPath(name, false);
+                parent.Append(b);
+                parent.SaveToDiskAtPath(name, false);
             }
         }
 
+        public void UpdateCount(object sender, PropertyChangedEventArgs e)
+        {
+          //  Console.WriteLine("triggered");
+            if (root.Children.Count > 0)
+            {
+                int i = this.root.CountChildrenRecur(this.root.Children[0].Children);
+                if (i>0)
+                {
+                    btn_import.IsEnabled = true;
+                    ((Label)((StackPanel)btn_import.Content).Children[1]).Content = $"Import[{i}] Blueprints";
+                }
+                else
+                {
+                    btn_import.IsEnabled = false;
+                    ((Label)((StackPanel)btn_import.Content).Children[1]).Content = $"Import[] Blueprints";
+                }
+            }
+        }
+
+        public void UpdateJob()
+        {
+            progressBar.Dispatcher.BeginInvoke(DispatcherPriority.Normal,
+                new DispatcherOperationCallback(delegate
+                {
+                    _jobs--;
+                    if (_jobs == 0)
+                    {
+                        progressBar.Value = 0;
+                        Mouse.OverrideCursor = null;
+                        Unblocker();
+                    }
+                    return null;
+                }), null);
+        }
 
         public void UpdateProgress(int newProgress, string newMessage)
         {
@@ -333,11 +407,23 @@ namespace EvoEditApp
                     if (progressBar.Value >= 90)
                     {
                         Mouse.OverrideCursor = null;
-                        unblocker();
+                        Unblocker();
                     }
                     return null;
                 }), null);
         }
+
+        public void UpdateStateCount(object sender, EventArgs e)
+        {
+            var ev = (PropertyChangedEventArgs)e;
+            progressBar.Dispatcher.BeginInvoke(DispatcherPriority.Normal,
+                new DispatcherOperationCallback(delegate
+                {
+                    State.Text = ev.PropertyName;
+                    return null;
+                }), null);
+        }
+
         public void SetProgress(int newProgress, string newMessage)
         {
             progressBar.Value = newProgress;
@@ -347,47 +433,66 @@ namespace EvoEditApp
         //Import currently selected blueprints
         private void button_Click_1(object sender, RoutedEventArgs e)
         {
-             
-                if (globaldestinationpath.Length == 0)
+            
+                if (_globaldestinationpath.Length == 0)
                 {
                     MessageBox.Show("Destination path not set!");
                     return;
                 }
 
-                if (temppath.Length == 0)
+                if (_temppath.Length == 0)
                 {
                     MessageBox.Show("Folder path not set!");
                     return;
                 }
-                blocker();
+                Blocker();
                 Mouse.OverrideCursor = System.Windows.Input.Cursors.Wait;
             progressBar.Value = 0;
                 State.Text = "Starting";
-                var basename = Path.GetFileNameWithoutExtension(lbl_filename.Content.ToString());
-                jobs = FileList.Count(x => x.IsSelected == true);
-                var tasks = new Task[jobs];
+                var basename = Path.GetFileNameWithoutExtension(root.Children[0].Children[0].path);
+                _jobs = this.root.CountChildrenRecur(this.root.Children[0].Children);
+                var tasks = new Task[_jobs];
                 int i = 0;
 
                 bool optimize = checkBox_Optimize.IsChecked.Value;
                 bool paint = checkBox_Paint.IsChecked.Value;
-                foreach (var file in FileList.Where(x => x.IsSelected == true))
+
+                var FileList = this.root.GetPathsRecur(this.root.Children[0].Children, this.root.Children[0].path, this.root.Children[0].IsChecked);
+                foreach (var file in FileList)
                 {
                     tasks[i] = new Task(() =>
                     {
-                        RealStart(file.path, basename,optimize ,paint );
+                    RealStart(file, basename,optimize ,paint );
                     });
                     tasks[i].Start();
                     i++;
                 }
         }
 
+        public FooViewModel PopulateTree(DirectoryInfo d)
+        {
+            FooViewModel c = new FooViewModel(d.Name, d.FullName);
+            var l = d.GetDirectories();
+            if (l.Length == 0)
+            {
+                return c;
+            }
+           
+            foreach (var dir in l)
+            {
+                c.Children.Add(PopulateTree(dir));
+            }
+
+            return c;
+        }
+
         //import click
         private void MenuItem_Click_2(object sender, RoutedEventArgs e)
         {
-            if (temppath.Length >0)
+            if (_temppath.Length >0)
             {
-                FileList.Clear();
-                cleanup();
+                this.root.Children.Clear();
+                Cleanup();
             }
             OpenFileDialog openFileDlg = new OpenFileDialog();
             openFileDlg.Filter = "SMENT|*.sment|ZIP|*.zip";
@@ -396,8 +501,6 @@ namespace EvoEditApp
             if (!ZipFile.IsZipFile(openFileDlg.FileName) || !openFileDlg.FileName.EndsWith(".sment")) return;
             DirectoryInfo di = new DirectoryInfo(CreateUniqueTempDirectory());
             FileInfo f = new FileInfo(openFileDlg.FileName);
-            lbl_filename.Content = Path.GetFileName(openFileDlg.FileName);
-
             Console.WriteLine("extracting .sment");
             using (ZipFile zip = ZipFile.Read(f.FullName))
             {
@@ -407,34 +510,14 @@ namespace EvoEditApp
                     entry.Extract(di.FullName);
                 }
             }
-            temppath = di.FullName;
+            _temppath = di.FullName;
 
-            DirectoryInfo d = new DirectoryInfo(temppath);
-            foreach (var cur_d in (d.GetDirectories())[0].GetDirectories())
-            {
-                var b = new BoolStringClass { name = cur_d.Name, path = cur_d.FullName, IsSelected = false };
-                if (cur_d.Name == "DATA")
-                {
-                    b.IsSelected = true;
-                }
-                FileList.Add(b);
-            }
-            currentdirectories=1;
-            
+            DirectoryInfo d = new DirectoryInfo(_temppath);
+            root.Children.Add(PopulateTree(d));
+            root.Initialize();
+            root.Children[0].Children[0].Children.Last().SetIsChecked(true,true,true);
+            lbl_current.Content = Path.GetFileNameWithoutExtension(f.Name);
             Console.WriteLine(di);
-            ((Label)((StackPanel)btn_import.Content).Children[1]).Content = "Import[1] Blueprints";
-        }
-
-        private void CheckBox_Checked_1(object sender, RoutedEventArgs e)
-        {
-            currentdirectories++;
-            ((Label)((StackPanel)btn_import.Content).Children[1]).Content = $"Import[{currentdirectories}] Blueprints";
-        }
-
-        private void CheckBox_Unchecked(object sender, RoutedEventArgs e)
-        {
-            currentdirectories--;
-            ((Label)((StackPanel)btn_import.Content).Children[1]).Content = $"Import[{currentdirectories}] Blueprints";
         }
 
         private void Import_Folder(object sender, RoutedEventArgs e)
@@ -443,36 +526,26 @@ namespace EvoEditApp
             if (ookiiDialog.ShowDialog() == true)
             {
                 // do something with the folder path
-                if (temppath.Length > 0)
+                if (_temppath.Length > 0)
                 {
-                    FileList.Clear();
-                    cleanup();
+                    this.root.Children.Clear();
+                    Cleanup();
                 }
                 DirectoryInfo di = new DirectoryInfo(ookiiDialog.SelectedPath);
-                
 
-                lbl_filename.Content = Path.GetFileName(di.Name);
-                temppath = di.FullName;
-
-                foreach (var cur_d in di.GetDirectories())
-                {
-                    var b = new BoolStringClass { name = cur_d.Name, path = cur_d.FullName, IsSelected = false };
-                    if (cur_d.Name == "DATA")
-                    {
-                        b.IsSelected = true;
-                    }
-                    FileList.Add(b);
-                }
-                currentdirectories = 1;
-
-                Console.WriteLine(di); 
-                ((Label)((StackPanel)btn_import.Content).Children[1]).Content = "Import[1] Blueprints";
+                this.root.Children.Add(PopulateTree(di));
+                root.Initialize();
+                root.Children[0].Children[0].Children.Last().SetIsChecked(true, true, true);
+                _temppath = di.FullName;
+                _currentdirectories = 1;
+                lbl_current.Content = Path.GetFileNameWithoutExtension(di.Name);
+                Console.WriteLine(di);
             }
         }
 
         private void Path_Set_Click(object sender, RoutedEventArgs e)
         {
-            setpath();
+            Setpath();
         }
 
         private void Coming_Soon(object sender, RoutedEventArgs e)
@@ -482,7 +555,7 @@ namespace EvoEditApp
 
         private void Open_Github_Guide(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Out of the box: Set up a path, import your '.sment' blueprint, hit import!");
+            MessageBox.Show("Out of the box: Set up an output path, import your '.sment' blueprint, hit import!");
         }
 
         private void Open_Github(object sender, RoutedEventArgs e)
@@ -490,7 +563,7 @@ namespace EvoEditApp
             System.Diagnostics.Process.Start("https://github.com/pinesh/EvoEdit");
         }
 
-        private void blocker()
+        private void Blocker()
         {
             FileHeader.IsEnabled = false;
             ConfigureHeader.IsEnabled = false;
@@ -501,7 +574,7 @@ namespace EvoEditApp
             groupBox.IsEnabled = false;
         }
 
-        private void unblocker()
+        private void Unblocker()
         {
             FileHeader.IsEnabled = true;
             ConfigureHeader.IsEnabled = true;
@@ -512,10 +585,14 @@ namespace EvoEditApp
             groupBox.IsEnabled = true;
         }
 
+        private void checkBox_Paint_Checked(object sender, RoutedEventArgs e)
+        {
+
+        }
     }
     public static class BlockOffsets
     {
-        private static Dictionary<byte, Vector3i> scaleoffsets = new Dictionary<byte, Vector3i>
+        private static Dictionary<byte, Vector3i> _scaleoffsets = new Dictionary<byte, Vector3i>
         {
             { 0, new Vector3i(2, 0, 2) },
             { 1, new Vector3i(4, 0, 4) },
@@ -529,7 +606,7 @@ namespace EvoEditApp
         };
 
 
-        private static Dictionary<byte, Vector3i> offsets = new Dictionary<byte, Vector3i>
+        private static Dictionary<byte, Vector3i> _offsets = new Dictionary<byte, Vector3i>
         {
             {0,new Vector3i(0,0,0)},
             {1,new Vector3i(0,0,0)},
@@ -562,16 +639,16 @@ namespace EvoEditApp
             {23,new Vector3i(2,2,0)},
         };
 
-        public static Vector3i getScaleOffsets(byte key)
+        public static Vector3i GetScaleOffsets(byte key)
         {
 
-            return scaleoffsets[key];
+            return _scaleoffsets[key];
         }
 
-        public static Vector3i getOffsets(byte key)
+        public static Vector3i GetOffsets(byte key)
         {
             
-            return offsets[key];
+            return _offsets[key];
         }
     }
 }
