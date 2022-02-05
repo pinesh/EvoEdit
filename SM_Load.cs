@@ -25,11 +25,11 @@ namespace EvoEditApp
         public int V;
         public int Scale;
 
-        public SmLoad(int s = 1)
+        public SmLoad(int s = 1,bool slabs = false)
         {
             Scale = s;
             V = 0;
-            Smd = new Smd3(s:Scale);
+            Smd = new Smd3(s:Scale,slabflag:slabs);
         }
         public List<Vector3i> Dump()
         {
@@ -55,6 +55,7 @@ namespace EvoEditApp
         private BlockList _blist;
         private readonly int _scale;
         public int V;
+        private bool _slabflag;
         public BlockList GetBlockList()
         {
             return _blist;
@@ -73,7 +74,8 @@ namespace EvoEditApp
 
             return new Tuple<Vector3i, Vector3i>(minT, maxT);
         }
-        public Smd3(int a = 16,int b = 32,int s = 1)
+
+        public Smd3(int a = 16, int b = 32, int s = 1, bool slabflag = false)
         {
             V = 0;
             _segmentsInLineRegion = a;
@@ -81,6 +83,7 @@ namespace EvoEditApp
             _positionCore = new Vector3i(16, 16, 16);
             _blist = new BlockList();
             this._scale = s;
+            this._slabflag = slabflag;
         }
 
         public void ReadFolder(DirectoryInfo directoryBp)
@@ -114,7 +117,7 @@ namespace EvoEditApp
                 case ".smd3":
                 {
                     V = 3;
-                    var smdRegion = new SmdRegion(s:_scale);
+                    var smdRegion = new SmdRegion(s:_scale,_slabflag:this._slabflag);
                     foreach (var fileName in fileList)
                     {
                         smdRegion.Read(fileName, _blist);
@@ -135,292 +138,6 @@ namespace EvoEditApp
                     throw new Exception("Unknown smd format");
             }
         }
-
-
-
-        public void Read(DirectoryInfo directoryBp)
-        {
-            var directoryData = new DirectoryInfo(System.IO.Path.Combine(directoryBp.FullName, "DATA"));
-            //directory_data = os.path.join(directory_blueprint, "DATA");
-            var fileList = directoryData.GetFiles().OrderBy( fi => fi.Name).ToList();
-            if (fileList.Count() < 0)
-            {
-                Console.WriteLine("no smd files found");
-                return;
-            }
-            //assert len(file_list) > 0, "No smd files found"
-            var fName = fileList[0];
-            if ((fName.Attributes & FileAttributes.Directory) != 0 && fName.Name.StartsWith("ATTACHED"))
-            {
-                var dp = new DirectoryInfo(fName.FullName);
-                fileList = dp.GetFiles().OrderBy(fi => fi.Name).ToList();
-                if (fileList.Count() < 0)
-                {
-                    Console.WriteLine("no smd files found");
-                    return;
-                }
-                fName = fileList[0];
-            }
-            if (fName.Extension.Equals(".smd3"))
-            {
-               V = 3;
-                var smdRegion =new SmdRegion();
-                foreach(var fileName in fileList)
-                {
-                    //this._file_name_prefix, x, y, z = os.path.splitext(file_name)[0].rsplit('.', 3) TODO CHECK IF THIS COMES UP AGAIN
-                    smdRegion.Read(fileName, _blist);
-                }
-            }
-            else if (fName.Extension.Equals(".smd2"))
-            {
-                V = 2;
-                Console.WriteLine("'smd2' file format found");
-                var smd2 = new Smd2();
-                smd2.Read(directoryBp); Console.WriteLine("done");
-                //var offset = (8, 8, 8);
-                this._blist = smd2.GetBlockList();
-                //this.blist.move_positions(offset);
-            }
-            else
-            {
-                throw new Exception("Unknown smd format");
-            }
-        }
-    }
-
-    public struct BlockBit
-    {
-        private readonly int _int24;
-        private readonly int _version;
-        public bool Visited; 
-
-        public BlockBit(int i, int v, bool u = false)
-        {
-            _int24 = i;
-            _version = v;
-            Visited = u;
-        }
-
-        public int get_int_24()
-        {
-            return _int24;
-        }
-
-        public int GetSevoId()
-        {
-            return BlockTypes.Sevo_ID((short)get_id());
-        }
-
-        public Vector3i GetSevoPaint()
-        {
-            return BlockTypes.Sevo_Paint((short)get_id());
-        }
-
-        private static int bits_parse(int x, int start, int length)
-        {
-            var tmp = x >> start;
-            return tmp & ((int)Math.Pow(2, length) - 1);
-        }
-
-        public int get_id()
-        {
-            return bits_parse(_int24, 0, 11);
-        }
-
-        private int get_axis_rotation()
-        {
-            if (_version >= 3) return bits_parse(_int24, 21, 3);
-            var blockId = (short)get_id();
-            if (BlockTypes.IsHepta(blockId) || BlockTypes.IsTetra(blockId)) //TYPE 4/5
-                return bits_parse(_int24, 22, 1);
-            var bit2223 = bits_parse(_int24, 22, 2);
-            if (BlockTypes.IsCorner(blockId)) //TYPE 2
-                return bit2223 | (bits_parse(_int24, 19, 1) << 2);
-            return bit2223;
-        }
-
-        private int get_rotations()
-        {
-            return bits_parse(_int24, this._version < 3 ? 20 : 19, 2);
-        }
-
-        private int get_face()
-        {
-            if (this._version < 3)
-                return bits_parse(this._int24, 20, 3);
-
-            return bits_parse(this._int24, 19, 3);
-        }
-
-        private int get_block_side_id()
-        {
-            return bits_parse(_int24, this._version < 3 ? 20 : 19, 3);
-        }
-
-        public int get_Sevo_rot()
-        {
-            return get_Sevo_rot2();
-        }
-
-
-        public int get_sevo_corners2(int r,int a)
-        {
-            switch (a)
-            {
-                case 0://done
-                    switch (r)
-                    {
-                        case 1:
-                            return 3;//x
-                        case 2:
-                            return 0; //2/20
-                        case 3:
-                      
-                            return 1; //2/20
-                        default:
-                            return 2; //2/20
-                    }
-                case 1:
-                    switch (r)//NOT RIGHT
-                    {
-                        case 1:
-                            return 6;
-                        case 2:
-                        
-                            return 5; //5
-                        case 3:
-                         
-                            return 4;//4
-                        default:
-                            return 7; 
-                    }
-                case 2:
-                    switch (r)//WEDGES DONE
-                    {
-                        case 1:
-                            return 8;
-                        case 2:
-                            return 9;
-                        case 3:
-                            return 10;
-                        default:
-                            return 11;
-                    }
-                case 3:
-                    switch (r)//WEDGES - most likely just corners?
-                    {
-                        case 1:
-                            return 14;
-                        case 2:
-                            return 13; 
-                        case 3:
-                            return 12;
-                        default:
-                            return 15; 
-                    }
-                case 4:
-                    switch (r)//ONLY CORNERS
-                    {
-                        case 1:
-                            return 23;
-                        case 2:
-                            return 22;
-                        case 3:
-                            return 21;
-                        default:
-                            return 20;
-                    }
-                case 5:
-                    switch (r)//ONLY CORNERS
-                    {
-                        case 1:
-                            return 16;
-                        case 2:
-                            return 17;
-                        case 3:
-                            return 18;
-                        default:
-                            return 19;
-                    }
-                default:
-                    return 0;
-            }
-        }
-
-        public int get_Sevo_rot2()
-        {
-            int axis = get_axis_rotation();
-            int rot = get_rotations();
-            short id = 0;
-            id = (short)this.get_id();
-            if (BlockTypes.IsCorner(id))
-                return get_sevo_corners2(rot, axis);
-            //  Console.WriteLine("fucked");
-
-            switch (axis)
-            {
-                case 0:
-                    switch (rot)//this is the top
-                    {
-                        case 1://trialing 3
-                            if (BlockTypes.IsWedge(id)) return 0;
-                                return 3; 
-                        case 2:
-                            //one of the cases here should be directed to 3,
-                            //if()
-                            if (BlockTypes.IsWedge(id)) return 3;
-                            return 0; // one of these 0's should be a 1 in a single case?
-                        case 3:
-                            if (BlockTypes.IsWedge(id)) return 2;
-                            return 1;//changed from 1
-                        default:
-                            if (BlockTypes.IsWedge(id)) return 1; 
-                            return 2; //X
-                    }
-                case 1:
-                    switch (rot)// this is the bottom
-                    {//0 FIXED THE HEPTA
-                        case 1:
-                            if (BlockTypes.IsWedge(id)) return 6;
-                            return 23;//6//FUCKING HEPTA (NO 7)22 
-                        case 2:
-                            if (BlockTypes.IsWedge(id)) return 5;
-                            return 8; //5
-                        case 3:
-                            if (BlockTypes.IsWedge(id)) return 4;
-                            return 17;//4
-                        default:
-                            if (BlockTypes.IsWedge(id)) return 7;
-                            return 14; //7//FUCKING HEPTA INVERSE 7 13 <- THIS WAS THE ISSUE
-                    }
-                case 2:
-                    switch (rot)//WEDGES
-                    {
-                        case 1:
-                            return 23;
-                        case 2:
-                            return 17;
-                        case 3:
-                            return 19;
-                        default:
-                            return 21;
-                    }
-                case 3:
-                    switch (rot)//WEDGES - most likely just corners?
-                    {
-                        case 1:
-                            return 9;
-                        case 2:
-                            return 9; //might be right was 22
-                        case 3:
-                            return 9;
-                        default:
-                            return 9; //was 20/5
-                    }
-                default:
-                    return 0;
-            }
-        }
     }
 
 
@@ -433,7 +150,8 @@ internal class SmdRegion
         private readonly int _segmentsInALine;
         private readonly int _blocksInALineInASegment;
         private readonly int _scale;
-        public SmdRegion(int segmentsInALine= 16, int blocksInALine= 32,int s =1)
+        private readonly bool slabflag;
+        public SmdRegion(int segmentsInALine= 16, int blocksInALine= 32,int s =1, bool _slabflag = false)
         {
             this._blocksInALineInASegment = blocksInALine;
             this._segmentsInALine = segmentsInALine;
@@ -441,6 +159,7 @@ internal class SmdRegion
             this._segmentsInACube = this._segmentsInAnArea * this._segmentsInALine;
             this._version = new Tuple<int,int,int,int>(3, 0, 0, 0);
             this._scale = s;
+            this.slabflag = _slabflag;
             //this.position_to_segment = { }
             //this.position_to_region = new Dictionary<int, SmdRegion>();
             // this._block_list = new BlockList();
@@ -482,7 +201,7 @@ internal class SmdRegion
         {
             var segmentIdToSize = this._read_region_header(s);
             ushort segmentId = 0;
-            var segement = new SmdSegment(this._blocksInALineInASegment,_scale);
+            var segement = new SmdSegment(this._blocksInALineInASegment,_scale,slabflag);
             while (_isEOF(s))
             {
                 segmentId += 1;
@@ -520,9 +239,10 @@ internal class SmdRegion
             private Vector3i _position;
             private bool _hasValidData;
             private uint _compressedSize;
+            private bool _slabflag;
           
 
-            public SmdSegment(int blocksInALine = 32,int s = 1)
+            public SmdSegment(int blocksInALine = 32,int s = 1, bool _slabflag = false)
             {
                 this._blocksInALine = blocksInALine;
                 this._blocksInAnArea = this._blocksInALine * this._blocksInALine;
@@ -532,6 +252,7 @@ internal class SmdRegion
                 this._hasValidData = false;
                 this._compressedSize = 0;
                 this._scale = (int)(4 * Math.Pow(2, s));
+                this._slabflag = _slabflag;
                 // this.block_index_to_block = { }
             }
          
@@ -549,6 +270,7 @@ internal class SmdRegion
                 this._compressedSize = s.ReadUInt32();
 
             }
+
             private void _read_block_data(BlockList blockList, SmBinary s)
             {
                 try
@@ -563,10 +285,14 @@ internal class SmdRegion
                         int24 = this._version < 3 ? SmBinary.ToUnsignedInt(padded) : SmBinary.ToUnsignedIntB(padded);
                         if (int24 == 0) continue;
                         var block = new BlockBit(int24, this._version);
+                       // Console.WriteLine((short)block.get_id());
+
+                       if (BlockTypes.IsSlab((short)block.get_id()) && _slabflag) continue;
                         if (!BlockTypes.IsAnyHull((short)block.get_id()))
                         {
                             continue;
                         }
+                      
                         blockList.Blist.Add(get_block_position_by_block_index(index), block);
                     }
                 }

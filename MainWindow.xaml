@@ -136,7 +136,7 @@
             </StatusBar>
         </DockPanel>
         <GroupBox x:Name="groupBox_Copy" Header="Settings" HorizontalAlignment="Left" Height="172" Margin="343,23,0,0" VerticalAlignment="Top" Width="159">
-            <ComboBox x:Name="cmbox_ratio" HorizontalAlignment="Left" Margin="97,62,-2,0" VerticalAlignment="Top" Width="52" IsEditable="False"  
+            <ComboBox x:Name="cmbox_ratio" HorizontalAlignment="Left" Margin="97,75,-2,0" VerticalAlignment="Top" Width="52" IsEditable="False"  
                       IsReadOnly ="True" Text="Set Scale" SelectionChanged="comboBox_SelectionChanged">
                 <ComboBoxItem>1/8m</ComboBoxItem>
                 <ComboBoxItem>1/4m</ComboBoxItem>
@@ -150,10 +150,11 @@
             </ComboBox>
         </GroupBox>
 
-        <CheckBox x:Name="checkBox_Optimize" Content="Optimize Build" HorizontalAlignment="Left" Height="26" Margin="354,46,0,0" VerticalAlignment="Top" Width="108" IsChecked="True"/>
-        <CheckBox x:Name="checkBox_Paint" Content="Ignore Paint" HorizontalAlignment="Left" Height="26" Margin="354,72,0,0" VerticalAlignment="Top" Width="108" IsChecked="False" Checked="checkBox_Paint_Checked"/>
+        <CheckBox x:Name="checkBox_Optimize" Content="Optimize Build" HorizontalAlignment="Left" Height="26" Margin="354,49,0,0" VerticalAlignment="Top" Width="108" IsChecked="True"/>
+        <CheckBox x:Name="checkBox_Paint" Content="Ignore Paint" HorizontalAlignment="Left" Height="26" Margin="354,67,0,0" VerticalAlignment="Top" Width="108" IsChecked="False" Checked="checkBox_Paint_Checked"/>
         <GroupBox x:Name="groupBox1" Header="Verbose" HorizontalAlignment="Left" Height="178" Margin="343,200,0,0" VerticalAlignment="Top" Width="159"/>
-        <Label x:Name="label2" Content="Translation Ratio:" HorizontalAlignment="Left" Margin="343,98,0,0" VerticalAlignment="Top"/>
+        <Label x:Name="label2" Content="Translation Ratio:" HorizontalAlignment="Left" Margin="343,112,0,0" VerticalAlignment="Top"/>
+        <CheckBox x:Name="checkBox_Paint_Copy" Content="Ignore Slabs" HorizontalAlignment="Left" Height="26" Margin="354,86,0,0" VerticalAlignment="Top" Width="108" IsChecked="False" Checked="checkBox_Slab_Checked" Unchecked="checkBox_Slab_Checked"/>
 
     </Grid>
 </Window>

@@ -6,11 +6,13 @@ using System.Linq;
 using System.Net.Sockets;
 using System.Numerics;
 using System.Runtime.InteropServices;
+using System.Runtime.Remoting.Channels;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Documents;
+using System.Windows.Input;
 using System.Windows.Media;
 using testapp1;
 
@@ -23,6 +25,8 @@ namespace EvoEditApp
         private SortedDictionary<Vector3i, BlockBit> _ok;
         public Vector3i Max;
         public Vector3i Min;
+        private bool _ignorePaintFlag;
+        private bool _igoreSlabsFlag;
         public int Scale;
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -38,7 +42,7 @@ namespace EvoEditApp
                 handler(this, e);
         }
 
-        public Mergenew(Dictionary<Vector3i, BlockBit> l,  Vector3i u, Vector3i v , int s = 1)
+        public Mergenew(Dictionary<Vector3i, BlockBit> l, Vector3i u, Vector3i v, int s = 1, bool paint = false)
         {
             _ok = new SortedDictionary<Vector3i, BlockBit>(new Vector3icompare());
             Master = l;
@@ -46,6 +50,7 @@ namespace EvoEditApp
             this.Max = v;
             this.Scale = (int)(4 * Math.Pow(2, s));
             Mblist = new List<Mblocks>();
+            _ignorePaintFlag = paint;
             Console.WriteLine(Master.Count);
             Console.WriteLine($"min = [{Min.X},{Min.Y},{Min.Z}]");
             Console.WriteLine($"max = [{Max.X},{Max.Y},{Max.Z}]");
@@ -99,6 +104,70 @@ namespace EvoEditApp
 
             //case y is large, scale should be x or z depending on rotation.
             return new Tuple<ushort, Vector3i>(range_to_scale(z, y, x),new Vector3i(0,0,0));
+        }
+
+        public Tuple<ushort, Vector3i> get_scale_slab(Vector3i start, Vector3i end, int rot)
+        {
+            int x = Math.Abs(start.X - end.X) / Scale;
+            int y = Math.Abs(start.Y - end.Y) / Scale;
+            int z = Math.Abs(start.Z - end.Z) / Scale;
+
+            //Y is not possible for a slab, so the other must be unzero.
+           // Console.WriteLine($"rot:{rot}x:{x},y:{y},z:{z}");
+           
+                switch (rot)
+                {
+                    case 8://side slab needs to go up 1. when shorter side (z? //SIDE CORRECT
+                        return new Tuple<ushort, Vector3i>(range_to_scale(x, z, y), new Vector3i(0, 4*y, 0));//DONE
+                    case 4://BOTTOM needs to go forwards
+                        return new Tuple<ushort, Vector3i>(range_to_scale(x, y, z), new Vector3i(0, 0, 4*z));//check again
+                    case 16://back needs to go up
+                        return new Tuple<ushort, Vector3i>(range_to_scale(y, x, y), new Vector3i(0, 4*y, 0));
+                    case 0://TOP CORRECT
+                        return new Tuple<ushort, Vector3i>(range_to_scale(x, y, z), new Vector3i(0, 0, 0));//done
+                    case 12://SIDE CORRECT
+                        return new Tuple<ushort, Vector3i>(range_to_scale(x, z, y), new Vector3i(0, 0, 0));//done
+                    case 22:
+                        return new Tuple<ushort, Vector3i>(range_to_scale(y, x, z), new Vector3i(0, 4*y, 4*z));
+                    //  case 23:
+                    //return new Tuple<ushort, Vector3i>(range_to_scale(y, x, z), new Vector3i(0, 0, 0));
+            }
+
+            
+            //case y is large, scale should be x or z depending on rotation.
+            return new Tuple<ushort, Vector3i>(range_to_scale(x, y, z), new Vector3i(0, 0, 0));
+        }
+        
+        //insert a thin slab at the same place. with the same scale. 
+        public Tuple<ushort, Vector3i> get_scale_thiccslab(Vector3i start, Vector3i end, int rot)
+        {
+            int x = Math.Abs(start.X - end.X) / Scale;
+            int y = Math.Abs(start.Y - end.Y) / Scale;
+            int z = Math.Abs(start.Z - end.Z) / Scale;
+            //Y is not possible for a slab, so the other must be unzero.
+            //Console.WriteLine($"rot:{rot}x:{x},y:{y},z:{z}");
+
+            switch (rot)//when this is 1, we want to add 2
+            {
+                case 8://side slab needs to go up 1. when shorter side (z? //SIDE CORRECT
+                    return new Tuple<ushort, Vector3i>(range_to_scale(x, z, y), new Vector3i(0, 4 * y, 2));//DONE //not right
+                case 4://BOTTOM needs to go forwards
+                    return new Tuple<ushort, Vector3i>(range_to_scale(x, y, z), new Vector3i(0, -2, 4 * z));//check again
+                case 16://back needs to go up
+                    return new Tuple<ushort, Vector3i>(range_to_scale(y, x, y), new Vector3i(2, 4 * y, 0));
+                case 0://TOP CORRECT
+                    return new Tuple<ushort, Vector3i>(range_to_scale(x, y, z), new Vector3i(0, 2, 0));//done
+                case 12://SIDE CORRECT
+                    return new Tuple<ushort, Vector3i>(range_to_scale(x, z, y), new Vector3i(0, 0, -2));//done // not right
+                case 22:
+                    return new Tuple<ushort, Vector3i>(range_to_scale(y, x, z), new Vector3i(-2, 4 * y, 4 * z));
+                //  case 23:
+                //return new Tuple<ushort, Vector3i>(range_to_scale(y, x, z), new Vector3i(0, 0, 0));
+            }
+
+
+            //case y is large, scale should be x or z depending on rotation.
+            return new Tuple<ushort, Vector3i>(range_to_scale(x, y, z), new Vector3i(0, 0, 0));
         }
 
         public ushort get_scale(Vector3i start, Vector3i end)
@@ -184,6 +253,7 @@ namespace EvoEditApp
             _ok = new SortedDictionary<Vector3i, BlockBit>(new Vector3icompare());
             foreach (var keypair in Master)
             {
+                //Console.WriteLine($"block type {keypair.Value.get_id()}, block axis {keypair.Value.get_axis_rotation()}, block rotation {keypair.Value.get_rotations()}");
                 _ok.Add(keypair.Key,keypair.Value);
             }
             Min = startpos;
@@ -193,6 +263,7 @@ namespace EvoEditApp
             int cur = 0;
             foreach (var key in keys)
             {
+               
                 cur += 1;
                 int m = Master.Count;
                 if (cur % 100 == 0)
@@ -203,7 +274,7 @@ namespace EvoEditApp
                 findOne(key);
             }
 
-            Console.WriteLine($"reduced to {Mblist.Count}");
+        // Console.WriteLine($"reduced to {Mblist.Count}");
         }
 
         public List<Vector3i> GetAllPoints(Vector3i start, Vector3i end, int type,int r)
@@ -235,7 +306,7 @@ namespace EvoEditApp
             var style = (ushort)BlockTypes.Sevo_ID((short)type);
             var r = b.get_Sevo_rot();
 
-            if (style != 196 && style != 197)
+            if (style >= 198 && style <= 200)//don't merge tetra or hepta 198-200
             {
                 Mblocks non = new Mblocks
                 {
@@ -272,7 +343,7 @@ namespace EvoEditApp
             var xcount = mastlist.Count-1;//take off self.
 
             //we have wedges done.
-            if (style == 197 && xcount != 0)
+            if (style == 197|| style == 168 && xcount != 0)
             {
                 Mblocks zm = new Mblocks
                 {
@@ -309,7 +380,7 @@ namespace EvoEditApp
             }
             var zcount = c-1;
             //we have wedges done.
-            if (style == 197 && zcount != 0)
+            if (style == 197 || style == 168 && zcount != 0)
             {
                 Mblocks zm = new Mblocks
                 {
@@ -324,9 +395,27 @@ namespace EvoEditApp
                 {
                     Master.Remove(v);
                 }
-
                 return;
             }
+
+            if (style >= 243 && style <= 245 && zcount != 0 && xcount != 0) //slabs can only have two stretches
+            {
+                Mblocks zm = new Mblocks
+                {
+                    Startpos = start,
+                    Endpos = new Vector3i(u.X + (Scale * xcount), u.Y, u.Z + (Scale * zcount)),
+                    Type = type,
+                    Rot = r
+                };
+                Mblist.Add(zm);
+
+                foreach (var v in mastlist)
+                {
+                    Master.Remove(v);
+                }
+                return;
+            }
+
             c = 1;
             while (c < 16)
             {

@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.ComponentModel.Design.Serialization;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -34,6 +35,9 @@ namespace EvoEditApp
         private int _jobs;
         private string _globaldestinationpath;
         private FooViewModel root;
+
+        public bool IgnorePaint;
+        public bool IgnoreSlabs = false;
 
         public MainWindow()
         {
@@ -156,13 +160,6 @@ namespace EvoEditApp
             return uniqueTempDir;
         }
         
-        public class BoolStringClass
-        {
-            public string Name { get; set; }
-            public string Path { get; set; }
-            public bool IsSelected { get; set; }
-        }
-
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
             Cleanup();
@@ -190,14 +187,14 @@ namespace EvoEditApp
                 {
                     throw new Exception("Path not valid");
                 }
-                var s = new SmLoad(_scale);
-                UpdateProgress(0, $"Reading:{name}");
+                var s = new SmLoad(_scale,IgnoreSlabs);
+                UpdateProgress(0, $"Reading:{name} this could take a while");
                 s.Read(new DirectoryInfo(p));
                 UpdateProgress(interval, $"");
                 s.Smd.get_min_max_vector().Deconstruct(out Vector3i min, out Vector3i max);
                 if (optimize)
                 {
-                    var m = new Mergenew(s.Smd.GetBlockList().Blist, min, max, _scale);
+                    var m = new Mergenew(s.Smd.GetBlockList().Blist, min, max, _scale,IgnorePaint);
                     m.PropertyChanged += UpdateStateCount;
                     UpdateProgress(0, $"Optimizing:{name}");
                     m.Merge();
@@ -324,6 +321,7 @@ namespace EvoEditApp
                     Vector3i paint = BlockTypes.Sevo_Paint((short)newBlock.Type);
                     byte rot = (byte)(sbyte)newBlock.Rot;
                     var s = (ushort)BlockTypes.Sevo_ID((short)newBlock.Type);
+                    //if (s == 244) rot = 0;
                     var sc = m.get_scale(newBlock.Startpos, newBlock.Endpos);
                     switch (s)
                     {
@@ -334,13 +332,40 @@ namespace EvoEditApp
                             m.get_scale_wedge(newBlock.Startpos, newBlock.Endpos, rot)
                                 .Deconstruct(out sc, out additional);
                             break;
+                        case 244:
+                             m.get_scale_slab(newBlock.Startpos, newBlock.Endpos, rot)
+                                .Deconstruct(out sc, out additional);
+                            break;
+                        case 243:
+                            m.get_scale_slab(newBlock.Startpos, newBlock.Endpos, rot)
+                                .Deconstruct(out sc, out additional);
+                            break;
+                        case 245:
+                            m.get_scale_slab(newBlock.Startpos, newBlock.Endpos, rot)
+                                .Deconstruct(out sc, out additional);
+                            m.get_scale_thiccslab(newBlock.Startpos, newBlock.Endpos, rot).Deconstruct(out sc, out Vector3i extra);
+                            s = 243;
+                            d.Add(new BrickInstanceData
+                            {
+                                scale = sc,
+                                rotation = rot,
+                                gridPosition = newBlock.Startpos + multiplier * BlockOffsets.GetOffsets(rot) + multiplier * extra + BlockOffsets.GetScaleOffsets((byte)scale) ,
+                                brickId = (ushort)244,
+                                color = (object)new object[] { paint.X, paint.Y, paint.Z, 255 },
+                                material = 0,
+                                healthScore = 255,
+                                gridSize = (byte)(scale),
+                                instanceId = i++
+                            });
+                            //special slab, add an additional.
+                            break;
                     }
                     d.Add(new BrickInstanceData
                     {
                         scale = sc,
                         rotation = rot,
                         gridPosition = newBlock.Startpos + multiplier*BlockOffsets.GetOffsets(rot) + multiplier* additional + BlockOffsets.GetScaleOffsets((byte)scale),
-                        brickId = (ushort)BlockTypes.Sevo_ID((short)newBlock.Type),
+                        brickId = s,
                         color = (object)new object[] { paint.X, paint.Y, paint.Z, 255 },
                         material = 0,
                         healthScore = 255,
@@ -360,6 +385,7 @@ namespace EvoEditApp
                 parent.SaveToDiskAtPath(name, false);
             }
         }
+
 
         public void UpdateCount(object sender, PropertyChangedEventArgs e)
         {
@@ -550,7 +576,7 @@ namespace EvoEditApp
 
         private void Coming_Soon(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Coming in the next update");
+            MessageBox.Show("Coming in a later update");
         }
 
         private void Open_Github_Guide(object sender, RoutedEventArgs e)
@@ -588,6 +614,11 @@ namespace EvoEditApp
         private void checkBox_Paint_Checked(object sender, RoutedEventArgs e)
         {
 
+        }
+
+        private void checkBox_Slab_Checked(object sender, RoutedEventArgs e)
+        {
+            this.IgnoreSlabs = !IgnoreSlabs;
         }
     }
     public static class BlockOffsets
