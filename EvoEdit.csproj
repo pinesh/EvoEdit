@@ -6,8 +6,8 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{50B6C11A-9B7B-44F7-8543-6BDD8A994AA6}</ProjectGuid>
     <OutputType>WinExe</OutputType>
-    <RootNamespace>testapp1</RootNamespace>
-    <AssemblyName>testapp1</AssemblyName>
+    <RootNamespace>EvoEditApp</RootNamespace>
+    <AssemblyName>EvoEdit</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
@@ -105,10 +105,10 @@
     <Compile Include="BlockBit.cs" />
     <Compile Include="BlockTypes.cs" />
     <Compile Include="FooViewModel.cs" />
-    <Compile Include="merge.cs" />
     <Compile Include="save.cs" />
     <Compile Include="SMD2.cs" />
     <Compile Include="SM_Load.cs" />
+    <Compile Include="Voxel_Import.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -143,17 +143,25 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+    <None Include="import_template_blank.sevo">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
-    <None Include="testentity.sevo">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="obj2voxel-v1.3.4.exe">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="stl2obj.exe">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

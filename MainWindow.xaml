@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:EvoEditApp"
         mc:Ignorable="d"
-        Title="EvoEdit, Starship Evo Voxel Converter" Height="450" Width="521.834" Closing="Window_Closing" >
+        Title="EvoEdit, Starship Evo Voxel Converter" Height="450" Width="529.501" Closing="Window_Closing" >
 
     <Window.Resources>
         <ResourceDictionary>
@@ -51,7 +51,7 @@
                     <MenuItem Header="Import" >
                         <MenuItem Header="_Folder" Click="Import_Folder" />
                         <MenuItem Header="_Blueprint (.sment)" Click="MenuItem_Click_2"/>
-                        <MenuItem Header="_Model (.obj)" Click="Coming_Soon"/>
+                        <MenuItem Header="_Model (stl/obj)" Click="model_button_click"/>
                     </MenuItem>
                 </MenuItem>
 
@@ -65,44 +65,48 @@
                 </MenuItem>
             </Menu>
         </DockPanel>
-        <Button x:Name="btn_import" IsEnabled="False" HorizontalAlignment="Left" Margin="10,353,0,0" VerticalAlignment="Top" Width="323" Height="25" Click="button_Click_1">
-            <Button.Content>
-                <StackPanel VerticalAlignment="Center" 
-                            HorizontalAlignment="Center" Orientation="Horizontal" 
-                            Background="Transparent" Height="25">
-                    <Viewbox Margin="0 3" >
-                        <Path Fill="Gray" 
-                              VerticalAlignment="Center" HorizontalAlignment="Center" 
-                              Data="M16,10H14V7H10V10H8L12,14M19,15H15A3,3 0 0,1 12,
-                      18A3,3 0 0,1 9,15H5V5H19M19,3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,
-                      0 5,21H19A2,2 0 0,0 21,19V5A2,2 0 0,0 19,3Z"/>
-                    </Viewbox>
-                    <Label Content="Import[] Blueprints" VerticalAlignment="Center" 
-                           HorizontalAlignment="Center" VerticalContentAlignment="Center" 
-                           HorizontalContentAlignment="Center" Margin="2 1" Padding="5" 
-                           Foreground="Gray" FontSize="10" FontWeight="Bold"/>
-                </StackPanel>
-            </Button.Content>
-        </Button>
-        <GroupBox x:Name="groupBox" Header="Starmade" HorizontalAlignment="Left" Height="325" Margin="0,23,0,0" VerticalAlignment="Top" Width="338">
+
+        <GroupBox x:Name="groupBox" Header="Starmade" HorizontalAlignment="Left" Height="355" Margin="0,23,0,0" VerticalAlignment="Top" Width="338">
 
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="24"/>
-                    <RowDefinition Height="*"/>
+                    <RowDefinition/>
+                    <RowDefinition Height="0*"/>
+                    <RowDefinition Height="24"/>
                 </Grid.RowDefinitions>
                 <StackPanel Orientation="Horizontal" Grid.Row="0">
                     <Label x:Name="label" Content="Discovered Files in:" Height="38" Margin="1,0,0,0" Width="165" VerticalAlignment="Top" HorizontalAlignment="Left"/>
                     <Label x:Name="lbl_current" Content="" Height="38" Margin="1,0,0,0" Width="165" VerticalAlignment="Top" HorizontalAlignment="Left"/>
                 </StackPanel>
-                
                 <TreeView 
                     x:Name="tree"
                     Grid.Row="1" 
                     ItemContainerStyle="{StaticResource TreeViewItemStyle}"
                     ItemsSource="{Binding Mode=OneWay}"
-                    ItemTemplate="{StaticResource CheckBoxItemTemplate}" Background="{x:Null}" BorderBrush="{x:Null}"
+                    ItemTemplate="{StaticResource CheckBoxItemTemplate}" Background="{x:Null}" BorderBrush="{x:Null}" Margin="0,0,0,24"
                 />
+
+                <Button x:Name="btn_readSM" Height="22"  Grid.Row="3" IsEnabled="False" Click="btn_readSM_Click">
+                    <Button.Resources>
+                        <Style TargetType="Border">
+                            <Setter Property="CornerRadius" Value="2"/>
+                        </Style>
+                    </Button.Resources>
+                    <StackPanel VerticalAlignment="Center" 
+                                HorizontalAlignment="Center" Orientation="Horizontal" 
+                                Background="Transparent" Height="25">
+                        <Viewbox Margin="0 3" >
+                            <Path Fill="Gray" 
+                                      VerticalAlignment="Center" HorizontalAlignment="Center" 
+                                      Data="M22,3H5A2,2 0 0,0 3,5V9H5V5H22V19H5V15H3V19A2,2 0 0,0 5,21H22A2,2 0 0,0 24,19V5A2,2 0 0,0 22,3M7,15V13H0V11H7V9L11,12L7,15M20,13H13V11H20V13M20,9H13V7H20V9M17,17H13V15H17V17Z"/>
+                        </Viewbox>
+                        <Label Content="Read [] Blueprints" VerticalAlignment="Center" 
+                                   HorizontalAlignment="Center" VerticalContentAlignment="Center" 
+                                   HorizontalContentAlignment="Center" Margin="2 1" Padding="5" 
+                                   Foreground="Gray" FontSize="10" FontWeight="Bold"/>
+                    </StackPanel>
+                </Button>
             </Grid>
         </GroupBox>
         <DockPanel Height="30" VerticalAlignment="Bottom">
@@ -124,8 +128,12 @@
                     <TextBlock Name="n" Text ="Built By Pinesh" />
                 </StatusBarItem>
                 <Separator Grid.Column="1" />
+
                 <StatusBarItem Grid.Column="2">
-                    <TextBlock Name ="CurrentFolder" Text="Ouput: Not Set" />
+                    <StackPanel Orientation="Horizontal">
+                        <Label Content="Loaded:" />
+                        <TextBlock x:Name ="LoadedFile" Text="No File(s)" Margin="0,5,0,0" />
+                    </StackPanel>
                 </StatusBarItem>
                 <StatusBarItem Grid.Column="3">
                     <TextBlock  Name ="State" Text="what is being done" />
@@ -135,26 +143,115 @@
                 </StatusBarItem>
             </StatusBar>
         </DockPanel>
-        <GroupBox x:Name="groupBox_Copy" Header="Settings" HorizontalAlignment="Left" Height="172" Margin="343,23,0,0" VerticalAlignment="Top" Width="159">
-            <ComboBox x:Name="cmbox_ratio" HorizontalAlignment="Left" Margin="97,75,-2,0" VerticalAlignment="Top" Width="52" IsEditable="False"  
-                      IsReadOnly ="True" Text="Set Scale" SelectionChanged="comboBox_SelectionChanged">
-                <ComboBoxItem>1/8m</ComboBoxItem>
-                <ComboBoxItem>1/4m</ComboBoxItem>
-                <ComboBoxItem>1/2m</ComboBoxItem>
-                <ComboBoxItem IsSelected="True">1m</ComboBoxItem>
-                <ComboBoxItem>2m</ComboBoxItem>
-                <ComboBoxItem>4m</ComboBoxItem>
-                <ComboBoxItem>8m</ComboBoxItem>
-                <ComboBoxItem>16m</ComboBoxItem>
-                <ComboBoxItem>32m</ComboBoxItem>
-            </ComboBox>
+        <GroupBox x:Name="groupBox_Copy" Header="Settings" HorizontalAlignment="Left" Height="167" Margin="343,23,0,0" VerticalAlignment="Top" Width="160">
+            <Grid>
+                <StackPanel Orientation="Vertical">
+                    <CheckBox x:Name="checkBox_Optimize" Content="Optimize Build" HorizontalAlignment="Left" Height="26" VerticalAlignment="Top" Width="108" IsChecked="True"/>
+                    <CheckBox x:Name="checkBox_Paint" Content="Ignore Paint" HorizontalAlignment="Left" Height="26"  VerticalAlignment="Top" Width="108" IsChecked="False" Unchecked="checkBox_Paint_Checked" Checked="checkBox_Paint_Checked"/>
+                    <CheckBox x:Name="checkBox_Paint_Copy" Content="Ignore Slabs" HorizontalAlignment="Left" Height="26" VerticalAlignment="Top" Width="108" IsChecked="False" Checked="checkBox_Slab_Checked" Unchecked="checkBox_Slab_Checked"/>
+                    <Label x:Name="label2" Content="Translation Ratio:" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                    <Button x:Name="btn_import" IsEnabled="False" VerticalAlignment="Top" Height="22" Click="button_Click_1" Margin="0,18,1,0">
+                        <Button.Resources>
+                            <Style TargetType="Border">
+                                <Setter Property="CornerRadius" Value="2"/>
+                            </Style>
+                        </Button.Resources>
+                        <StackPanel VerticalAlignment="Center" 
+                                    HorizontalAlignment="Center" Orientation="Horizontal" 
+                                    Background="Transparent" Height="25">
+                            <Viewbox Margin="0 3" >
+                                <Path Fill="Gray" 
+                                          VerticalAlignment="Center" HorizontalAlignment="Center" 
+                                          Data="M16,10H14V7H10V10H8L12,14M19,15H15A3,3 0 0,1 12,                       18A3,3 0 0,1 9,15H5V5H19M19,3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,                       0 5,21H19A2,2 0 0,0 21,19V5A2,2 0 0,0 19,3Z"/>
+                            </Viewbox>
+                            <Label Content="Import[] Blueprints" VerticalAlignment="Center" 
+                                       HorizontalAlignment="Center" VerticalContentAlignment="Center" 
+                                       HorizontalContentAlignment="Center" Margin="2 1" Padding="5" 
+                                       Foreground="Gray" FontSize="10" FontWeight="Bold"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+
+                <ComboBox x:Name="cmbox_ratio" HorizontalAlignment="Left" Margin="98,82,0,0" VerticalAlignment="Top" Width="39" IsEditable="False"  
+                          IsReadOnly ="True" Text="Set Scale" SelectionChanged="comboBox_SelectionChanged">
+                    <ComboBoxItem>1/8m</ComboBoxItem>
+                    <ComboBoxItem>1/4m</ComboBoxItem>
+                    <ComboBoxItem>1/2m</ComboBoxItem>
+                    <ComboBoxItem IsSelected="True">1m</ComboBoxItem>
+                    <ComboBoxItem>2m</ComboBoxItem>
+                    <ComboBoxItem>4m</ComboBoxItem>
+                    <ComboBoxItem>8m</ComboBoxItem>
+                    <ComboBoxItem>16m</ComboBoxItem>
+                    <ComboBoxItem>32m</ComboBoxItem>
+                </ComboBox>
+            </Grid>
+
         </GroupBox>
 
-        <CheckBox x:Name="checkBox_Optimize" Content="Optimize Build" HorizontalAlignment="Left" Height="26" Margin="354,49,0,0" VerticalAlignment="Top" Width="108" IsChecked="True"/>
-        <CheckBox x:Name="checkBox_Paint" Content="Ignore Paint" HorizontalAlignment="Left" Height="26" Margin="354,67,0,0" VerticalAlignment="Top" Width="108" IsChecked="False" Checked="checkBox_Paint_Checked"/>
-        <GroupBox x:Name="groupBox1" Header="Verbose" HorizontalAlignment="Left" Height="178" Margin="343,200,0,0" VerticalAlignment="Top" Width="159"/>
-        <Label x:Name="label2" Content="Translation Ratio:" HorizontalAlignment="Left" Margin="343,112,0,0" VerticalAlignment="Top"/>
-        <CheckBox x:Name="checkBox_Paint_Copy" Content="Ignore Slabs" HorizontalAlignment="Left" Height="26" Margin="354,86,0,0" VerticalAlignment="Top" Width="108" IsChecked="False" Checked="checkBox_Slab_Checked" Unchecked="checkBox_Slab_Checked"/>
+        <GroupBox x:Name="groupBox1" Header="3D" HorizontalAlignment="Left" Height="102" Margin="343,200,0,0" VerticalAlignment="Top" Width="160">
+
+            <StackPanel Orientation="Vertical">
+                <StackPanel Orientation="Horizontal">
+                    <Label Content="File:"></Label>
+                    <Label Name="lbl_objfile" Content="No File"></Label>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <Label Height="25" Content="Resolution"  HorizontalAlignment="Left"  />
+                    <Slider x:Name="slider" IsSnapToTickEnabled="True" Width="82" Maximum="1024" Minimum="128" Value="512" TickPlacement="BottomRight" TickFrequency="128" AutoToolTipPlacement="TopLeft" LargeChange="32" SmallChange="32"/>
+                </StackPanel>
+                <Button x:Name="btn_readObj" HorizontalAlignment="Left" Margin="0,5,0,-1" VerticalAlignment="Top" Width="148" Height="22" IsEnabled="False" Click="btn_readObj_Click">
+                    <Button.Resources>
+                        <Style TargetType="Border">
+                            <Setter Property="CornerRadius" Value="2"/>
+                        </Style>
+                    </Button.Resources>
+                    <StackPanel VerticalAlignment="Center" 
+                                HorizontalAlignment="Center" Orientation="Horizontal" 
+                                Background="Transparent" Height="25">
+                        <Viewbox Margin="0 3" >
+                            <Path Fill="Gray" 
+                                          VerticalAlignment="Center" HorizontalAlignment="Center" 
+                                          Data="M19,6A1,1 0 0,0 20,5A1,1 0 0,0 19,4A1,1 0 0,0 18,5A1,1 0 0,0 19,6M19,2A3,3 0 0,1 22,5V11H18V7H6V11H2V5A3,3 0 0,1 5,2H19M18,18.25C18,18.63 17.79,18.96 17.47,19.13L12.57,21.82C12.4,21.94 12.21,22 12,22C11.79,22 11.59,21.94 11.43,21.82L6.53,19.13C6.21,18.96 6,18.63 6,18.25V13C6,12.62 6.21,12.29 6.53,12.12L11.43,9.68C11.59,9.56 11.79,9.5 12,9.5C12.21,9.5 12.4,9.56 12.57,9.68L17.47,12.12C17.79,12.29 18,12.62 18,13V18.25M12,11.65L9.04,13L12,14.6L14.96,13L12,11.65M8,17.66L11,19.29V16.33L8,14.71V17.66M16,17.66V14.71L13,16.33V19.29L16,17.66Z"/>
+                        </Viewbox>
+                        <Label Content="Read Model" VerticalAlignment="Center" 
+                                       HorizontalAlignment="Center" VerticalContentAlignment="Center" 
+                                       HorizontalContentAlignment="Center" Margin="2 1" Padding="5" 
+                                       Foreground="Gray" FontSize="10" FontWeight="Bold"/>
+                    </StackPanel>
+                </Button>
+
+            </StackPanel>
+        </GroupBox>
+        <Button x:Name="Help3D" HorizontalAlignment="Left" Height="15" Margin="494,203,0,0" VerticalAlignment="Top" Width="15" RenderTransformOrigin="9.688,1.225" Click="Help3D_Click" >
+            <TextBlock Text="?" Margin="0,-3,0,0"/>
+            <Button.Resources>
+                <Style TargetType="Border">
+                    <Setter Property="CornerRadius" Value="10"/>
+                </Style>
+            </Button.Resources>
+        </Button>
+        <Button x:Name="HelpStarmade" HorizontalAlignment="Left" Height="15" Margin="329,26,0,0" VerticalAlignment="Top" Width="15" RenderTransformOrigin="9.688,1.225" Click="HelpStarmade_Click" >
+            <Button.Resources>
+                <Style TargetType="{x:Type Border}">
+                    <Setter Property="CornerRadius" Value="10"/>
+                </Style>
+
+
+            </Button.Resources>
+            <TextBlock Text="?" Margin="0,-3,0,0"/>
+        </Button>
+        <Button x:Name="HelpSettings" HorizontalAlignment="Left" Height="15" Margin="494,26,0,0" VerticalAlignment="Top" Width="15" RenderTransformOrigin="9.688,1.225" Click="HelpSettings_Click" >
+            <Button.Resources>
+                <Style TargetType="{x:Type Border}">
+                    <Setter Property="CornerRadius" Value="10"/>
+                </Style>
+
+
+            </Button.Resources>
+            <TextBlock Text="?" Margin="0,-3,0,0"/>
+        </Button>
+
+
 
     </Grid>
 </Window>

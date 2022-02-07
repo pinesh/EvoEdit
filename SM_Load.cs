@@ -260,10 +260,10 @@ internal class SmdRegion
             {
                
                 this._version = Math.Abs((int)((int)s.ReadByte()));
-                if (_version > 3 || _version < 2)
-                {
-                    Console.WriteLine($@"unsupported version: {this._version}");
-                }
+                //if (_version > 3 || _version < 2)
+              //  {
+                //    Console.WriteLine($@"unsupported version: {this._version}");
+               // }
                 this._timestamp = s.ReadUInt64();
                 this._position = s.read_vector_3_int32();
                 this._hasValidData = s.ReadBoolean();
