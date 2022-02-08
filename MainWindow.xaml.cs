@@ -591,10 +591,11 @@ namespace EvoEditApp
                 string p = "";
                 UpdateProgress(0, $"Converting to .obj");
                 var p_out = Path.Combine(_temppath, "evoOut.obj");
+                var t = "\"" + Path.Combine(Path.GetDirectoryName(strExeFilePath), "stl2obj.exe") + "\"";
                 Process stlProc = Process.Start(
-                    new ProcessStartInfo(Path.Combine(Path.GetDirectoryName(strExeFilePath), "stl2obj.exe"))
+                    new ProcessStartInfo(t)
                     {
-                        Arguments = $@"{name} {p_out}",
+                        Arguments = $"\"{name}\" \"{p_out}\"",
                         WindowStyle = ProcessWindowStyle.Normal,
                         CreateNoWindow = true,
                         UseShellExecute = false,
@@ -624,26 +625,31 @@ namespace EvoEditApp
                 State.Text = "Converting to .vl32";
                 //UpdateProgress(0, $"Converting to .vl32");
                 var p_out = Path.Combine(_temppath, "evoOut.vl32");
-                Process pr = Process.Start(new ProcessStartInfo(Path.Combine(Path.GetDirectoryName(strExeFilePath), "obj2voxel-v1.3.4.exe"))
+
+                var temp = "\""+ Path.Combine(Path.GetDirectoryName(strExeFilePath), "obj2voxel-v1.3.4.exe")+"\"";
+               // MessageBox.Show($@"running {temp} {name} {p_out} -r {voxelres}");
+                Process pr = Process.Start(new ProcessStartInfo(temp)
                 {
-                    Arguments = $@"{name} {p_out} -r {voxelres}",
+                    Arguments = $"\"{ name}\" \"{p_out}\" -r {voxelres}",
                     WindowStyle = ProcessWindowStyle.Normal,
                     CreateNoWindow = true,
                     UseShellExecute = false,
                     RedirectStandardError = true
                 });
-                
                 pr.WaitForExit();
-
+                Thread.Sleep(1000);
                 if (!new FileInfo(p_out).Exists)
                 {
-                    throw new Exception("Obj convert failed");
+                    throw new Exception($"Obj convert failed, no file at {p_out}");
                 }
+                //MessageBox.Show("convert worked");
                 return p_out;
             }
             catch (Exception e)
             {
+               
                 Console.WriteLine(e.Message);
+                MessageBox.Show(e.Message);
                 return "";
             }
         }
@@ -837,8 +843,11 @@ namespace EvoEditApp
                 }
 
                 Mouse.OverrideCursor = null;
-                if (Path.GetExtension(path) != ".vl32")
+                if (Path.GetExtension(path) != ".vl32" || path == "")
                 {
+                    Unblocker();
+                    Mouse.OverrideCursor = null;
+                    UpdateProgress(0,"");
                     return;
                 }
 
