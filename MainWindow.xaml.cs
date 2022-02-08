@@ -18,7 +18,6 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 using System.Xml;
-using Akavache;
 using Ionic.Zip;
 using Microsoft.Win32;
 using Ookii.Dialogs.Wpf;

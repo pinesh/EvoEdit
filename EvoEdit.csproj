@@ -58,12 +58,6 @@
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Akavache.Core, Version=8.1.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\akavache.core.8.1.1\lib\net462\Akavache.Core.dll</HintPath>
-    </Reference>
-    <Reference Include="Akavache.Sqlite3, Version=8.1.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\akavache.sqlite3.8.1.1\lib\net462\Akavache.Sqlite3.dll</HintPath>
-    </Reference>
     <Reference Include="DotNetZip, Version=1.16.0.0, Culture=neutral, PublicKeyToken=6583c7c814667745, processorArchitecture=MSIL">
       <HintPath>packages\DotNetZip.1.16.0\lib\net40\DotNetZip.dll</HintPath>
     </Reference>
