@@ -49,7 +49,10 @@
                     <MenuItem Header="_Set Paths" Click="Path_Set_Click"/>
                 </MenuItem>
                 <MenuItem x:Name ="ImportHeader" Header="Import" Width="56" Height="24" Margin="0" >
-                    <MenuItem Header="_Blueprint (.sment)" Click="MenuItem_Click_2"/>
+                    <MenuItem x:Name ="StarmadeHeader" Header="StarMade"  Margin="0" >
+                        <MenuItem Header="_Blueprint (.sment)" Click="MenuItem_Click_2"/>
+                        <MenuItem Header="_Unzipped (Folder)" Click="Import_Folder"/>
+                    </MenuItem>
                     <MenuItem Header="_Model (stl/obj/vl32)" Click="model_button_click"/>
                 </MenuItem>
             <MenuItem x:Name ="ConfigureHeader" Header="_Configure" Width="65" >
