@@ -326,7 +326,7 @@ internal class SmdRegion
                 var rest = blockIndex % this._blocksInAnArea;
                 var y = (int)(rest / this._blocksInALine);
                 var x = rest % this._blocksInALine;
-                return new Vector3i(-(x + _position.X)*_scale, (y + _position.Y)* _scale, (z + _position.Z)* _scale);
+                return new Vector3i(-(x + _position.X), (y + _position.Y), (z + _position.Z));
             }
     }
     }

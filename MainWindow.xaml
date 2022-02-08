@@ -45,17 +45,14 @@
     <Grid Margin="0,0,2,0">
         <DockPanel HorizontalAlignment="Left" Height="24" LastChildFill="True" VerticalAlignment="Top" Width="166">
             <Menu  DockPanel.Dock="Top" Margin="0,0,-348,0" Height="24">
-
-                <MenuItem x:Name ="FileHeader" Header="File" Width="94" Height="24" Margin="0" >
+                <MenuItem x:Name ="FileHeader" Header="File" Width="35" Height="24" Margin="0" >
                     <MenuItem Header="_Set Paths" Click="Path_Set_Click"/>
-                    <MenuItem Header="Import" >
-                        <MenuItem Header="_Folder" Click="Import_Folder" />
-                        <MenuItem Header="_Blueprint (.sment)" Click="MenuItem_Click_2"/>
-                        <MenuItem Header="_Model (stl/obj)" Click="model_button_click"/>
-                    </MenuItem>
                 </MenuItem>
-
-                <MenuItem x:Name ="ConfigureHeader" Header="_Configure" Width="94" >
+                <MenuItem x:Name ="ImportHeader" Header="Import" Width="56" Height="24" Margin="0" >
+                    <MenuItem Header="_Blueprint (.sment)" Click="MenuItem_Click_2"/>
+                    <MenuItem Header="_Model (stl/obj/vl32)" Click="model_button_click"/>
+                </MenuItem>
+            <MenuItem x:Name ="ConfigureHeader" Header="_Configure" Width="65" >
                     <MenuItem Header="_Colors" Click="Coming_Soon"/>
                     <MenuItem Header="_Block Mapping" Click="Coming_Soon"/>
                 </MenuItem>
@@ -63,7 +60,7 @@
                     <MenuItem Header="_Guide" Click ="Open_Github_Guide" />
                     <MenuItem Header="_Github"  Click ="Open_Github" />
                 </MenuItem>
-            </Menu>
+                </Menu>
         </DockPanel>
 
         <GroupBox x:Name="groupBox" Header="Starmade" HorizontalAlignment="Left" Height="355" Margin="0,23,0,0" VerticalAlignment="Top" Width="338">
@@ -143,33 +140,13 @@
                 </StatusBarItem>
             </StatusBar>
         </DockPanel>
-        <GroupBox x:Name="groupBox_Copy" Header="Settings" HorizontalAlignment="Left" Height="167" Margin="343,23,0,0" VerticalAlignment="Top" Width="160">
+        <GroupBox x:Name="groupBox_Copy" Header="Settings" HorizontalAlignment="Left" Height="136" Margin="343,23,0,0" VerticalAlignment="Top" Width="160">
             <Grid>
-                <StackPanel Orientation="Vertical">
+                <StackPanel Orientation="Vertical" Margin="0,0,0,10">
                     <CheckBox x:Name="checkBox_Optimize" Content="Optimize Build" HorizontalAlignment="Left" Height="26" VerticalAlignment="Top" Width="108" IsChecked="True"/>
                     <CheckBox x:Name="checkBox_Paint" Content="Ignore Paint" HorizontalAlignment="Left" Height="26"  VerticalAlignment="Top" Width="108" IsChecked="False" Unchecked="checkBox_Paint_Checked" Checked="checkBox_Paint_Checked"/>
                     <CheckBox x:Name="checkBox_Paint_Copy" Content="Ignore Slabs" HorizontalAlignment="Left" Height="26" VerticalAlignment="Top" Width="108" IsChecked="False" Checked="checkBox_Slab_Checked" Unchecked="checkBox_Slab_Checked"/>
                     <Label x:Name="label2" Content="Translation Ratio:" HorizontalAlignment="Left" VerticalAlignment="Top"/>
-                    <Button x:Name="btn_import" IsEnabled="False" VerticalAlignment="Top" Height="22" Click="button_Click_1" Margin="0,18,1,0">
-                        <Button.Resources>
-                            <Style TargetType="Border">
-                                <Setter Property="CornerRadius" Value="2"/>
-                            </Style>
-                        </Button.Resources>
-                        <StackPanel VerticalAlignment="Center" 
-                                    HorizontalAlignment="Center" Orientation="Horizontal" 
-                                    Background="Transparent" Height="25">
-                            <Viewbox Margin="0 3" >
-                                <Path Fill="Gray" 
-                                          VerticalAlignment="Center" HorizontalAlignment="Center" 
-                                          Data="M16,10H14V7H10V10H8L12,14M19,15H15A3,3 0 0,1 12,                       18A3,3 0 0,1 9,15H5V5H19M19,3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,                       0 5,21H19A2,2 0 0,0 21,19V5A2,2 0 0,0 19,3Z"/>
-                            </Viewbox>
-                            <Label Content="Import[] Blueprints" VerticalAlignment="Center" 
-                                       HorizontalAlignment="Center" VerticalContentAlignment="Center" 
-                                       HorizontalContentAlignment="Center" Margin="2 1" Padding="5" 
-                                       Foreground="Gray" FontSize="10" FontWeight="Bold"/>
-                        </StackPanel>
-                    </Button>
                 </StackPanel>
 
                 <ComboBox x:Name="cmbox_ratio" HorizontalAlignment="Left" Margin="98,82,0,0" VerticalAlignment="Top" Width="39" IsEditable="False"  
@@ -188,7 +165,7 @@
 
         </GroupBox>
 
-        <GroupBox x:Name="groupBox1" Header="3D" HorizontalAlignment="Left" Height="102" Margin="343,200,0,0" VerticalAlignment="Top" Width="160">
+        <GroupBox x:Name="groupBox1" Header="3D" HorizontalAlignment="Left" Height="136" Margin="344,164,0,0" VerticalAlignment="Top" Width="160">
 
             <StackPanel Orientation="Vertical">
                 <StackPanel Orientation="Horizontal">
@@ -197,8 +174,9 @@
                 </StackPanel>
                 <StackPanel Orientation="Horizontal">
                     <Label Height="25" Content="Resolution"  HorizontalAlignment="Left"  />
-                    <Slider x:Name="slider" IsSnapToTickEnabled="True" Width="82" Maximum="1024" Minimum="128" Value="512" TickPlacement="BottomRight" TickFrequency="128" AutoToolTipPlacement="TopLeft" LargeChange="32" SmallChange="32"/>
+                    <Slider x:Name="slider" IsSnapToTickEnabled="True" Width="82" Maximum="1024" Minimum="128" Value="512" TickPlacement="BottomRight" TickFrequency="128" AutoToolTipPlacement="TopLeft" LargeChange="32" SmallChange="32" ValueChanged="slider_ValueChanged"/>
                 </StackPanel>
+                <TextBox x:Name="txt_slider" Text="512" Height="23" TextWrapping="NoWrap" PreviewTextInput="txt_slider_PreviewTextInput" Margin="70,0,0,0" TextChanged="txt_slider_TextChanged"  />
                 <Button x:Name="btn_readObj" HorizontalAlignment="Left" Margin="0,5,0,-1" VerticalAlignment="Top" Width="148" Height="22" IsEnabled="False" Click="btn_readObj_Click">
                     <Button.Resources>
                         <Style TargetType="Border">
@@ -219,10 +197,12 @@
                                        Foreground="Gray" FontSize="10" FontWeight="Bold"/>
                     </StackPanel>
                 </Button>
+          
+
 
             </StackPanel>
         </GroupBox>
-        <Button x:Name="Help3D" HorizontalAlignment="Left" Height="15" Margin="494,203,0,0" VerticalAlignment="Top" Width="15" RenderTransformOrigin="9.688,1.225" Click="Help3D_Click" >
+        <Button x:Name="Help3D" HorizontalAlignment="Left" Height="15" Margin="495,167,0,0" VerticalAlignment="Top" Width="15" RenderTransformOrigin="9.688,1.225" Click="Help3D_Click" >
             <TextBlock Text="?" Margin="0,-3,0,0"/>
             <Button.Resources>
                 <Style TargetType="Border">
@@ -249,6 +229,26 @@
 
             </Button.Resources>
             <TextBlock Text="?" Margin="0,-3,0,0"/>
+        </Button>
+        <Button x:Name="btn_import" IsEnabled="False" VerticalAlignment="Top" Height="67" Click="button_Click_1" Margin="344,311,11,0">
+            <Button.Resources>
+                <Style TargetType="{x:Type Border}">
+                    <Setter Property="CornerRadius" Value="2"/>
+                </Style>
+            </Button.Resources>
+            <StackPanel VerticalAlignment="Center" 
+                                    HorizontalAlignment="Center" Orientation="Horizontal" 
+                                    Background="Transparent" Height="25">
+                <Viewbox Margin="0 3" >
+                    <Path Fill="Gray" 
+                                          VerticalAlignment="Center" HorizontalAlignment="Center" 
+                                          Data="M16,10H14V7H10V10H8L12,14M19,15H15A3,3 0 0,1 12,                       18A3,3 0 0,1 9,15H5V5H19M19,3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,                       0 5,21H19A2,2 0 0,0 21,19V5A2,2 0 0,0 19,3Z"/>
+                </Viewbox>
+                <Label Content="Export[] Blueprints" VerticalAlignment="Center" 
+                                       HorizontalAlignment="Center" VerticalContentAlignment="Center" 
+                                       HorizontalContentAlignment="Center" Margin="2 1" Padding="5" 
+                                       Foreground="Gray" FontSize="10" FontWeight="Bold"/>
+            </StackPanel>
         </Button>
 
 

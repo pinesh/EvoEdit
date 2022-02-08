@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using Akavache;
 using testapp1;
 
 namespace EvoEditApp
@@ -14,6 +15,7 @@ namespace EvoEditApp
     class Voxel_Import
     {
         public Dictionary<Vector3i, BlockBit> Master;
+        public Dictionary<Vector3i, byte> MasterDif;
         public List<MasterBlock> Mblist;
         private SortedDictionary<Vector3i, BlockBit> _ok;
         public Vector3i Min;
@@ -98,7 +100,7 @@ namespace EvoEditApp
                             .Deconstruct(out sc, out additional);
                         var extra = get_scale_thiccslab(newBlock.Startpos, newBlock.Endpos, rot);//this slab will have the same scalar as the parent.
                         s = 243;
-                        d.Add(GetBrick(sc,paint,rot, newBlock.Startpos + multiplier * BlockOffsets.GetOffsets(rot) +
+                        d.Add(GetBrick(sc,paint,rot,  newBlock.Startpos + multiplier * BlockOffsets.GetOffsets(rot) +
                                                      multiplier * extra + BlockOffsets.GetScaleOffsets((byte)grid_scale), 244,i++));
                         break;
                 }
@@ -107,31 +109,14 @@ namespace EvoEditApp
             return d;
         }
 
+        public bool useBlob = false;
         public Voxel_Import(Dictionary<Vector3i, BlockBit> l, Vector3i u, int s = 1, bool paint = false,int capS =1)
         {
-            _ok = new SortedDictionary<Vector3i, BlockBit>(new Vector3IComparer());
-            Master = new Dictionary<Vector3i, BlockBit>();
-
-            int oldM = 4 * (int)Math.Pow(2, capS);
-            int newM = 4 * (int)Math.Pow(2, s);
-            //we're optimizing to a new scalar
-            if (capS != s)
-            {
-                foreach (var keyPair in l)
-                {
-                    Master.Add(newM*(keyPair.Key/oldM), keyPair.Value);
-                }
-            }
-            else
-            {
-                foreach (var keyPair in l)
-                {
-                    Master.Add(keyPair.Key, keyPair.Value);
-                }
-            }
-          
+            //_ok = new SortedDictionary<Vector3i, BlockBit>(new Vector3IComparer());
+            Master = l;
+            MasterDif = new Dictionary<Vector3i, byte>(Master.Count*10);
+           // BlobCache.InMemory.Invalidate(string key)
             this.Min = u;
-       
             this.grid_scale = s;
             this.Scale = (int)(4 * Math.Pow(2, s));
             Mblist = new List<MasterBlock>();
@@ -279,7 +264,7 @@ namespace EvoEditApp
         /// <returns>The scale as a packed ushort</returns>
         internal ushort get_scale(Vector3i start, Vector3i end)
         {
-            return range_to_scale(Math.Abs(start.X - end.X) / Scale, Math.Abs(start.Y - end.Y) / Scale,
+            return range_to_scale(Math.Abs(start.X - end.X)/Scale, Math.Abs(start.Y - end.Y) / Scale,
                 Math.Abs(start.Z - end.Z) / Scale);
         }
 
@@ -381,23 +366,21 @@ namespace EvoEditApp
                 //Console.WriteLine($"block type {keypair.Value.get_id()}, block axis {keypair.Value.get_axis_rotation()}, block rotation {keypair.Value.get_rotations()}");
                 _ok.Add(keyPair.Key, keyPair.Value);
             }
-
             int og = _ok.Count;
-            int onep = og / 100;
             var cur = 0;
             int i = 0;
             foreach (var key in _ok.Keys.ToList())
             {
                 cur += 1;
 
-                double m = (float)((float)og - (float)Master.Count)/ (float)og * (float)100;
+                double m = (float)(MasterDif.Count/ (float)og) * (float)100;
                 if (m>i)
                 {
                     i++;
                     NotifyPropertyChanged($"{i}");
                 }
 
-                if (!Master.ContainsKey(key)) continue;
+                if (MasterDif.ContainsKey(key)) continue;
                 findOne(key);
             }
             NotifyPropertyChanged($"{100}");
@@ -415,13 +398,13 @@ namespace EvoEditApp
         internal List<Vector3i> GetAllPoints(Vector3i start, Vector3i end, int type, int r)
         {
             var points = new List<Vector3i>();
-            for (var yIndex = start.Y; yIndex <= end.Y; yIndex += Scale)
+            for (var yIndex = start.Y; yIndex <= end.Y; yIndex ++)
             {
                 //z
-                for (var zIndex = start.Z; zIndex <= end.Z; zIndex += Scale)
+                for (var zIndex = start.Z; zIndex <= end.Z; zIndex ++)
                 {
                     //x
-                    for (var xIndex = start.X; xIndex <= end.X; xIndex += Scale)
+                    for (var xIndex = start.X; xIndex <= end.X; xIndex ++)
                     {
                         var v = new Vector3i(xIndex, yIndex, zIndex);
                         if (!Comp(v, type, r)) return points;
@@ -439,7 +422,7 @@ namespace EvoEditApp
         {
             while (c < 16)
             {
-                var lv = GetAllPoints(new Vector3i(start.X + (Scale * c * dirX), start.Y + (Scale * c * dirY), start.Z + (Scale * c *dirZ)), new Vector3i(end.X + (Scale * c * dirX), end.Y+ (Scale * c * dirY), end.Z+ (Scale * c * dirZ)), type, r:r);
+                var lv = GetAllPoints(new Vector3i(start.X + (c * dirX), start.Y + (c * dirY), start.Z + (c *dirZ)), new Vector3i(end.X + (c * dirX), end.Y+ (c * dirY), end.Z+ (c * dirZ)), type, r:r);
                 if (mastlist.Count + lv.Count == (c+1)*m)
                 {
                     mastlist.AddRange(lv);
@@ -465,7 +448,9 @@ namespace EvoEditApp
             if (style >= 198 && style <= 200) //don't merge tetra or hepta 198-200
             {
                 Mblist.Add(GetMasterBlock(start,start,type,r));
-                Master.Remove(start);
+                if (!MasterDif.ContainsKey(start))
+                    MasterDif.Add(start, 0);
+                //Master.Remove(start);
                 return;
             }
 
@@ -482,10 +467,10 @@ namespace EvoEditApp
                 SwapBlock(mastlist,start,type,r,xcount);
                 return;
             }
-            IterateStretch(1, start, new Vector3i(start.X+(Scale*xcount),start.Y,start.Z), mastlist, type, r, m: (xcount + 1), dirZ: 1).Deconstruct(out mastlist,out int zcount);
+            IterateStretch(1, start, new Vector3i(start.X+(xcount),start.Y,start.Z), mastlist, type, r, m: (xcount + 1), dirZ: 1).Deconstruct(out mastlist,out int zcount);
 
             //we have wedges done.
-            if (style == 197 || style == 168 && zcount != 0)
+            if ((style == 197 || style == 168) && zcount != 0)
             {
                 SwapBlock(mastlist,start,type,r,xcount,0,zcount);
                 return;
@@ -497,17 +482,19 @@ namespace EvoEditApp
                 return;
             }
 
-            IterateStretch(1,start, new Vector3i(start.X + (Scale * xcount), start.Y, start.Z + (Scale * zcount)),mastlist,type,r,m: (xcount + 1) * (zcount + 1), dirY:1).Deconstruct(out mastlist, out int ycount);
+            IterateStretch(1,start, new Vector3i(start.X + (xcount), start.Y, start.Z + (zcount)),mastlist,type,r,m: (xcount + 1) * (zcount + 1), dirY:1).Deconstruct(out mastlist, out int ycount);
             //every point in this list becomes an mblock. 
             SwapBlock(mastlist, start, type, r, xcount, ycount, zcount);
             return;
         }
         internal void SwapBlock(List<Vector3i> mastlist,Vector3i start,int type, byte r, int offX = 0, int offY = 0, int offZ = 0)
         {
-            Mblist.Add(GetMasterBlock(start, new Vector3i(start.X + (Scale * offX), start.Y + (Scale * offY), start.Z + (Scale * offZ)), type, r));
+            Mblist.Add(GetMasterBlock(start, new Vector3i((start.X + offX),  (start.Y + ( offY)), (start.Z + (offZ))), type, r));
             foreach (var v in mastlist)
             {
-                Master.Remove(v);
+                if(!MasterDif.ContainsKey(v))
+                    MasterDif.Add(v, 0);
+                //Master.Remove(v);
             }
         }
 
@@ -516,8 +503,8 @@ namespace EvoEditApp
             if (!_ignorePaintFlag)
                 return new MasterBlock()
                 {
-                    Startpos = start,
-                    Endpos = end,
+                    Startpos = Scale*start,
+                    Endpos = Scale * end,
                     Type = type,
                     BaseType = type,
                     Rot = rot
@@ -526,8 +513,8 @@ namespace EvoEditApp
 
             return new MasterBlock()
             {
-                Startpos = start,
-                Endpos = end,
+                Startpos = Scale * start,
+                Endpos = Scale * end,
                 Type = type,
                 BaseType = BlockTypes.GetDefault((short)type),
                 Rot = rot
@@ -536,7 +523,8 @@ namespace EvoEditApp
 
         internal bool Comp(Vector3i c, int type, int rot)
         {
-            if (!Master.ContainsKey(c)) return false;
+            if(!Master.ContainsKey(c)) return false;
+            if (MasterDif.ContainsKey(c)) return false;
             if (_ignorePaintFlag)
                 return Master[c].get_Sevo_rot() == rot &&
                        BlockTypes.GetDefault((short)Master[c].get_id()) == BlockTypes.GetDefault((short)type);

@@ -9,6 +9,7 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -17,6 +18,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 using System.Xml;
+using Akavache;
 using Ionic.Zip;
 using Microsoft.Win32;
 using Ookii.Dialogs.Wpf;
@@ -33,6 +35,7 @@ namespace EvoEditApp
     /// </summary>
     public partial class MainWindow : Window
     {
+        
         private int _currentdirectories;
         private string _temppath;
         private int _scale;
@@ -47,7 +50,6 @@ namespace EvoEditApp
         public MainWindow()
         {
             InitializeComponent();
-
             _temppath = "";
             _globaldestinationpath = @"";
             SetProgress(0, "");
@@ -240,14 +242,14 @@ namespace EvoEditApp
             if (i > 0)
             {
                 btn_readSM.IsEnabled = true;
-                ((Label)((StackPanel)btn_readSM.Content).Children[1]).Content = $"Read[{i}] Blueprints";
-                ((Label)((StackPanel)btn_import.Content).Children[1]).Content = $"Import[{i}] Blueprints";
+                ((Label)((StackPanel)btn_readSM.Content).Children[1]).Content = $"Read In [{i}] Blueprints";
+                ((Label)((StackPanel)btn_import.Content).Children[1]).Content = $"Export [{i}] Blueprints";
             }
             else
             {
                 btn_readSM.IsEnabled = false;
-                ((Label)((StackPanel)btn_readSM.Content).Children[1]).Content = $"Read[] Blueprints";
-                ((Label)((StackPanel)btn_import.Content).Children[1]).Content = $"Import[] Blueprints";
+                ((Label)((StackPanel)btn_readSM.Content).Children[1]).Content = $"Read In [] Blueprints";
+                ((Label)((StackPanel)btn_import.Content).Children[1]).Content = $"Export [] Blueprints";
             }
         }
 
@@ -477,6 +479,7 @@ namespace EvoEditApp
         private void Blocker()
         {
             FileHeader.IsEnabled = false;
+            ImportHeader.IsEnabled = false;
             ConfigureHeader.IsEnabled = false;
             btn_readSM.IsEnabled = false;
             btn_readObj.IsEnabled = false;
@@ -491,6 +494,7 @@ namespace EvoEditApp
 
         private void Unblocker()
         {
+            ImportHeader.IsEnabled = true;
             FileHeader.IsEnabled = true;
             ConfigureHeader.IsEnabled = true;
             btn_import.IsEnabled = true;
@@ -517,7 +521,7 @@ namespace EvoEditApp
         public void model_button_click(object sender, RoutedEventArgs e)
         {
             OpenFileDialog openFileDlg = new OpenFileDialog();
-            openFileDlg.Filter = "OBJ|*.obj|STL|*.stl";
+            openFileDlg.Filter = "OBJ|*.obj|STL|*.stl|VL32|*.vl32";
             Nullable<bool> result = openFileDlg.ShowDialog();
             if (result != true) return;
             FileInfo f = new FileInfo(openFileDlg.FileName);
@@ -578,108 +582,127 @@ namespace EvoEditApp
             Mouse.OverrideCursor = null;
             // btn_import.IsEnabled = true;
         }
-
-        void worker_parse(object sender, DoWorkEventArgs e)
+        private string ReadStl(string name)
         {
-            ((Tuple<string,int>)e.Argument).Deconstruct(out string name, out int res);
-
-            if (_temppath.Length == 0)
+            try
             {
-                DirectoryInfo di = new DirectoryInfo(CreateUniqueTempDirectory());
-                _temppath = di.FullName;
-            }
-
-            string strExeFilePath = System.Reflection.Assembly.GetExecutingAssembly().Location;
-            string p = "";
-            string p_out = "";
-            string n = Path.GetFileNameWithoutExtension(name);
-
-           // (sender as BackgroundWorker).ReportProgress(int.Parse(ev.PropertyName.ToString()));
-            if (Path.GetExtension(name) == ".stl")
-            {
+                progressBar.Value = 10;
+                State.Text = "Converting to .obj, this could take a while";
+                string strExeFilePath = System.Reflection.Assembly.GetExecutingAssembly().Location;
+                string p = "";
                 UpdateProgress(0, $"Converting to .obj");
-                p_out = Path.Combine(_temppath, "evoOut.obj");
-                p = Path.Combine(Path.GetDirectoryName(strExeFilePath), "stl2obj.exe");
-                Process stlProc = Process.Start(new ProcessStartInfo(p)
+                var p_out = Path.Combine(_temppath, "evoOut.obj");
+                Process stlProc = Process.Start(
+                    new ProcessStartInfo(Path.Combine(Path.GetDirectoryName(strExeFilePath), "stl2obj.exe"))
+                    {
+                        Arguments = $@"{name} {p_out}",
+                        WindowStyle = ProcessWindowStyle.Normal,
+                        CreateNoWindow = true,
+                        UseShellExecute = false,
+                        RedirectStandardError = true
+                    });
+                stlProc?.WaitForExit();
+                if (!new FileInfo(p_out).Exists)
                 {
-                    Arguments = $@"{name} {p_out} -r {res}",
+                    throw new Exception("File wasn't written");
+                }
+
+                return p_out;
+            }
+            catch(Exception e)
+            {
+                Console.WriteLine(e.Message);
+                return "";
+            }
+        }
+
+        private string Readobj(string name)
+        {
+            try
+            {
+                string strExeFilePath = System.Reflection.Assembly.GetExecutingAssembly().Location;
+                progressBar.Value += 20;
+                State.Text = "Converting to .vl32";
+                //UpdateProgress(0, $"Converting to .vl32");
+                var p_out = Path.Combine(_temppath, "evoOut.vl32");
+                Process pr = Process.Start(new ProcessStartInfo(Path.Combine(Path.GetDirectoryName(strExeFilePath), "obj2voxel-v1.3.4.exe"))
+                {
+                    Arguments = $@"{name} {p_out} -r {voxelres}",
                     WindowStyle = ProcessWindowStyle.Normal,
                     CreateNoWindow = true,
                     UseShellExecute = false,
                     RedirectStandardError = true
                 });
-                stlProc?.WaitForExit();
+                
+                pr.WaitForExit();
+
                 if (!new FileInfo(p_out).Exists)
                 {
-                    Console.WriteLine("Stl Conversion Failed");
-                    return;
+                    throw new Exception("Obj convert failed");
                 }
-
-                name = p_out;
+                return p_out;
             }
-            UpdateProgress(10, $"Converting to .vl32");
-            p_out = Path.Combine(_temppath, "evoOut.vl32");
-            p = Path.Combine(Path.GetDirectoryName(strExeFilePath), "obj2voxel-v1.3.4.exe");
-            Process pr = Process.Start(new ProcessStartInfo(p)
+            catch (Exception e)
             {
-                Arguments = $@"{name} {p_out} -r {res}",
-                WindowStyle = ProcessWindowStyle.Normal,
-                CreateNoWindow = true,
-                UseShellExecute = false,
-                RedirectStandardError = true
-            });
-            pr.WaitForExit();
-
-            if (!new FileInfo(p_out).Exists)
-            {
-                Console.WriteLine("Obj Conversion Failed");
-                return;
-            }
-            UpdateProgress(20, $"Reading .v132");
-            using (FileStream fs = File.OpenRead(p_out))
-            {
-                Dictionary<Vector3i, BlockBit> test = new Dictionary<Vector3i, BlockBit>();
-                using (SmBinary b = new SmBinary(fs))
-                {
-                    int multiplier = 4 * (int)Math.Pow(2, _scale);
-                    int count = 0;
-                    int m = 20;
-                    while (b.BaseStream.Position <= b.BaseStream.Length - 16)
-                    {
-                        int x = b.ReadInt32();
-                        int y = b.ReadInt32();
-                        int z = b.ReadInt32();
-                        _ = b.ReadByte();
-                        _ = b.ReadByte();
-                        _ = b.ReadByte();
-                        _ = b.ReadByte();
-
-                        var v = new Vector3i(x * multiplier, y * multiplier, z * multiplier);
-                        if (!test.ContainsKey(v))
-                        {
-                            double d = ((float)count / (float)b.BaseStream.Length) * 100 ;
-                            if (d > m)
-                            {
-                                (sender as BackgroundWorker).ReportProgress(m);
-                                m++;
-                            }
-                            test.Add(v, new BlockBit(260101, 3));
-                        }
-                        count += 16;
-                    }
-
-                    e.Result = new LoadInstance()
-                    {
-                        blocks = test,
-                        filepath = p_out,
-                        newfilename = Path.Combine(_globaldestinationpath, new StringBuilder(n).Append(".sevo").ToString()),
-                        min = new Vector3i(0, 0, 0),
-                        capturescale = _scale
-                    };
-                }
+                Console.WriteLine(e.Message);
+                return "";
             }
         }
 
+        private void readvl32(object sender, DoWorkEventArgs e)
+        {
+            ((Tuple<string,string>)e.Argument).Deconstruct(out string p_out,out string n);
+            try
+            {
+              
+                UpdateProgress(0, $"Reading .v132");
+                using (FileStream fs = File.OpenRead(p_out))
+                {
+                    
+                    using (SmBinary b = new SmBinary(fs))
+                    {
+                        int count = 0;
+                        int m = 0;
+                        Dictionary<Vector3i, BlockBit> test = new Dictionary<Vector3i, BlockBit>((int)b.BaseStream.Length/16);
+                        while (b.BaseStream.Position <= b.BaseStream.Length - 16)
+                        {
+                            int x = b.ReadInt32();
+                            int y = b.ReadInt32();
+                            int z = b.ReadInt32();
+                            _ = b.ReadByte();
+                            _ = b.ReadByte();
+                            _ = b.ReadByte();
+                            _ = b.ReadByte();
+
+                            var v = new Vector3i(x, y, z);
+                            double d = ((float)count / (float)b.BaseStream.Length) * 100;
+                            if (d > m)
+                            { (sender as BackgroundWorker).ReportProgress(m); m++;
+                            }
+
+                            //BlobCache.InMemory.InsertObject(v.ToString(), new BlockBit(260101, 3));
+                            test.Add(v, new BlockBit(260101, 3));
+                            
+                            count += 16;
+                        }
+                        e.Result = new LoadInstance()
+                        {
+                            blocks = test,
+                            filepath = p_out,
+                            newfilename = Path.Combine(_globaldestinationpath, new StringBuilder(n).Append(".sevo").ToString()),
+                            min = new Vector3i(0, 0, 0),
+                            capturescale = _scale
+                        };
+                    }
+                }
+            }
+            catch (Exception error)
+            {
+                MessageBox.Show($"Unable to Parse: {error.ToString()}", "Parse error", MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+                e.Result = new LoadInstance();
+            }
+        }
 
         private async Task<List<LoadInstance>> ReadBlueprints()
         {
@@ -771,23 +794,106 @@ namespace EvoEditApp
 
         }
 
+
+
+     
+
         private void btn_readObj_Click(object sender, RoutedEventArgs e)
         {
-            Blocker();
-            Mouse.OverrideCursor = System.Windows.Input.Cursors.Wait;
-            progressBar.Value = 0;
-            //set up a read and convert into vox file.
-            //_loadedInstances = new List<LoadInstance>();
-            btn_import.IsEnabled = false;
-          //  LoadInstance[] listInstances = await Task.WhenAll(t);
-            BackgroundWorker worker = new BackgroundWorker();
-            worker.WorkerReportsProgress = true;
-            worker.DoWork += worker_parse;
-            worker.ProgressChanged += worker_ProgressChanged;
-            worker.RunWorkerCompleted += worker_RunParseWorkerCompleted;
-            worker.RunWorkerAsync(new Tuple<string,int>(lbl_objfile.Content.ToString(), (int)slider.Value));
+            try
+            {
+                if (_temppath.Length == 0)
+                {
+                    DirectoryInfo di = new DirectoryInfo(CreateUniqueTempDirectory());
+                    _temppath = di.FullName;
+                }
+
+  
+                progressBar.Value = 0;
+                //set up a read and convert into vox file.
+                //_loadedInstances = new List<LoadInstance>();
+                btn_import.IsEnabled = false;
+                //  LoadInstance[] listInstances = await Task.WhenAll(t);
+
+                var path = lbl_objfile.Content.ToString();
+                var outputname = Path.GetFileNameWithoutExtension(Path.GetFileName(path));
+
+
+                if (path.Length == 0)
+                {
+                    //We have no file, shouldn't happen
+                    return;
+                }
+                Blocker();
+                Mouse.OverrideCursor = System.Windows.Input.Cursors.Wait;
+
+                if(Path.GetExtension(path) == ".stl")
+                {
+                    path = ReadStl(path);
+                }
+
+                if (Path.GetExtension(path) == ".obj")
+                {
+                    path = Readobj(path);
+                }
+
+                Mouse.OverrideCursor = null;
+                if (Path.GetExtension(path) != ".vl32")
+                {
+                    return;
+                }
+
+                BackgroundWorker worker = new BackgroundWorker();
+                worker.WorkerReportsProgress = true;
+                worker.DoWork += readvl32;
+                worker.ProgressChanged += worker_ProgressChanged;
+                worker.RunWorkerCompleted += worker_RunParseWorkerCompleted;
+                worker.RunWorkerAsync(new Tuple<string,string>(path,outputname));
+            }
+            catch(Exception er)
+            {
+                MessageBox.Show($"Unable to Read: {er.Message}", "Read error", MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+
+        private void slider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (txt_slider == null) return;
+            if (bounded)
+            {
+                bounded = false;
+            }
+            else
+            {
+                txt_slider.Text = e.NewValue.ToString();
+            }
+
 
         }
+
+        private void txt_slider_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            var textBox = sender as TextBox;
+            e.Handled = Regex.IsMatch(e.Text, "[^0-9]+");
+        }
+
+        private int voxelres;
+        private bool bounded = false;
+
+        private void txt_slider_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (txt_slider.Text.Length == 0)
+            {
+                txt_slider.Text = "0";
+            }
+
+            voxelres = int.Parse(txt_slider.Text);
+            if (voxelres > 1024 || voxelres < 248)
+                bounded = true;
+            slider.Value = voxelres;
+        }
+
     }
     
 }
