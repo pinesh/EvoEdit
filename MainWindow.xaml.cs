@@ -323,7 +323,7 @@ namespace EvoEditApp
                     worker.DoWork += worker_write;
                     worker.ProgressChanged += worker_ProgressChanged;
                     worker.RunWorkerCompleted += worker_RunWorkerCompleted;
-                    worker.RunWorkerAsync(_loadedInstances);
+                    worker.RunWorkerAsync(new Tuple<List<LoadInstance>, bool>(_loadedInstances, checkBox_Optimize.IsChecked.Value));
                     break;
             }
         }
@@ -335,13 +335,13 @@ namespace EvoEditApp
         void worker_write(object sender, DoWorkEventArgs e)
         {
             int i = 1;
-            List<LoadInstance> ls = (List<LoadInstance>)e.Argument;
+           ((Tuple<List<LoadInstance>, bool>)e.Argument).Deconstruct(out List<LoadInstance> ls, out bool fast);
             try
             {
                 foreach (var l in ls)
                 {
                     UpdateProgress(0, $"Initializing: {i}/{ls.Count}");
-                    Voxel_Import Vi = new Voxel_Import(l.blocks, l.min, _scale, IgnorePaint, l.capturescale);
+                    Voxel_Import Vi = new Voxel_Import(l.blocks, l.min, _scale, IgnorePaint, l.capturescale,fast);
                     Vi.PropertyChanged += (s, ev) =>
                     {
                         (sender as BackgroundWorker).ReportProgress(int.Parse(ev.PropertyName.ToString()));
@@ -369,12 +369,24 @@ namespace EvoEditApp
         }
         void worker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
+
             if((int)e.Result == 1)
                 MessageBox.Show("Done Writing, Check your output!: ");
             Unblocker();
+            if (checkBox_Optimize.IsChecked.Value)
+            {
+                btn_import.IsEnabled = false;
+                LoadedFile.Text = "No Files Loaded";
+                LoadedFile.Foreground = Brushes.Red;
+                _loadedInstances = new List<LoadInstance>();
+            }
+         
+           
             UpdateProgress(0, $"");
             Mouse.OverrideCursor = null;
         }
+
+
 
         public FooViewModel PopulateTree(DirectoryInfo d)
         {

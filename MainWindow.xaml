@@ -143,10 +143,10 @@
                 </StatusBarItem>
             </StatusBar>
         </DockPanel>
-        <GroupBox x:Name="groupBox_Copy" Header="Settings" HorizontalAlignment="Left" Height="136" Margin="343,23,0,0" VerticalAlignment="Top" Width="160">
+        <GroupBox x:Name="groupBox_Copy" Header="Settings" HorizontalAlignment="Left" Height="152" Margin="343,23,0,0" VerticalAlignment="Top" Width="160">
             <Grid>
                 <StackPanel Orientation="Vertical" Margin="0,0,0,10">
-                    <CheckBox x:Name="checkBox_Optimize" Content="Optimize Build" HorizontalAlignment="Left" Height="26" VerticalAlignment="Top" Width="108" IsChecked="True"/>
+                    <CheckBox x:Name="checkBox_Optimize" Content="Use Fast Optimize" HorizontalAlignment="Left" Height="26" VerticalAlignment="Top" Width="124" IsChecked="True"/>
                     <CheckBox x:Name="checkBox_Paint" Content="Ignore Paint" HorizontalAlignment="Left" Height="26"  VerticalAlignment="Top" Width="108" IsChecked="False" Unchecked="checkBox_Paint_Checked" Checked="checkBox_Paint_Checked"/>
                     <CheckBox x:Name="checkBox_Paint_Copy" Content="Ignore Slabs" HorizontalAlignment="Left" Height="26" VerticalAlignment="Top" Width="108" IsChecked="False" Checked="checkBox_Slab_Checked" Unchecked="checkBox_Slab_Checked"/>
                     <Label x:Name="label2" Content="Translation Ratio:" HorizontalAlignment="Left" VerticalAlignment="Top"/>
@@ -168,7 +168,7 @@
 
         </GroupBox>
 
-        <GroupBox x:Name="groupBox1" Header="3D" HorizontalAlignment="Left" Height="136" Margin="344,164,0,0" VerticalAlignment="Top" Width="160">
+        <GroupBox x:Name="groupBox1" Header="3D" HorizontalAlignment="Left" Height="136" Margin="344,175,0,0" VerticalAlignment="Top" Width="160">
 
             <StackPanel Orientation="Vertical">
                 <StackPanel Orientation="Horizontal">
@@ -205,7 +205,7 @@
 
             </StackPanel>
         </GroupBox>
-        <Button x:Name="Help3D" HorizontalAlignment="Left" Height="15" Margin="495,167,0,0" VerticalAlignment="Top" Width="15" RenderTransformOrigin="9.688,1.225" Click="Help3D_Click" >
+        <Button x:Name="Help3D" HorizontalAlignment="Left" Height="15" Margin="495,178,0,0" VerticalAlignment="Top" Width="15" RenderTransformOrigin="9.688,1.225" Click="Help3D_Click" >
             <TextBlock Text="?" Margin="0,-3,0,0"/>
             <Button.Resources>
                 <Style TargetType="Border">

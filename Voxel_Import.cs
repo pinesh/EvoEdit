@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using ICSharpCode.SharpZipLib.Zip;
 using testapp1;
 
 namespace EvoEditApp
@@ -109,12 +110,16 @@ namespace EvoEditApp
         }
 
         public bool useBlob = false;
-        public Voxel_Import(Dictionary<Vector3i, BlockBit> l, Vector3i u, int s = 1, bool paint = false,int capS =1)
+        private bool fast = true;
+        public Voxel_Import(Dictionary<Vector3i, BlockBit> l, Vector3i u, int s = 1, bool paint = false,int capS =1,bool fast = true)
         {
             //_ok = new SortedDictionary<Vector3i, BlockBit>(new Vector3IComparer());
+            this.fast = fast;
             Master = l;
-            MasterDif = new Dictionary<Vector3i, byte>(Master.Count*10);
-           // BlobCache.InMemory.Invalidate(string key)
+            if (!fast)
+                MasterDif = new Dictionary<Vector3i, byte>(Master.Count * 10);
+            
+            // BlobCache.InMemory.Invalidate(string key)
             this.Min = u;
             this.grid_scale = s;
             this.Scale = (int)(4 * Math.Pow(2, s));
@@ -338,23 +343,11 @@ namespace EvoEditApp
         }
 
 
-        public void Optimize(bool flag = true)
+        public void Optimize()
         {
             Mblist = new List<MasterBlock>();
-            if (flag)
-            {
-                this.Merge();
-                Console.WriteLine($"Reduced to {Mblist.Count} Blocks");
-                return;
-            }
-        
-            foreach (var keyPair in Master)
-            {
-                var type = keyPair.Value.get_id();
-                var r = (byte)keyPair.Value.get_Sevo_rot();
-                Mblist.Add(GetMasterBlock(keyPair.Key,keyPair.Key,type,r));
-            }
-
+            this.Merge();
+            Console.WriteLine($"Reduced to {Mblist.Count} Blocks");
         }
 
         internal void Merge()
@@ -368,21 +361,41 @@ namespace EvoEditApp
             int og = _ok.Count;
             var cur = 0;
             int i = 0;
-            foreach (var key in _ok.Keys.ToList())
+            if (fast)
             {
-                cur += 1;
-
-                double m = (float)(MasterDif.Count/ (float)og) * (float)100;
-                if (m>i)
+                foreach (var key in _ok.Keys.ToList())
                 {
-                    i++;
-                    NotifyPropertyChanged($"{i}");
-                }
+                    cur += 1;
 
-                if (MasterDif.ContainsKey(key)) continue;
-                findOne(key);
+                    double m = (float)((og-Master.Count) / (float)og) * (float)100;
+                    if (m > i)
+                    {
+                        i++;
+                        NotifyPropertyChanged($"{i}");
+                    }
+                    if (!Master.ContainsKey(key)) continue;
+                    findOne(key);
+                }
+                NotifyPropertyChanged($"{100}");
             }
-            NotifyPropertyChanged($"{100}");
+            else
+            {
+                foreach (var key in _ok.Keys.ToList())
+                {
+                    cur += 1;
+
+                    double m = (float)(MasterDif.Count / (float)og) * (float)100;
+                    if (m > i)
+                    {
+                        i++;
+                        NotifyPropertyChanged($"{i}");
+                    }
+                    if (MasterDif.ContainsKey(key)) continue;
+                    findOne(key);
+                }
+                NotifyPropertyChanged($"{100}");
+            }
+           
         }
 
 
@@ -447,8 +460,19 @@ namespace EvoEditApp
             if (style >= 198 && style <= 200) //don't merge tetra or hepta 198-200
             {
                 Mblist.Add(GetMasterBlock(start,start,type,r));
-                if (!MasterDif.ContainsKey(start))
-                    MasterDif.Add(start, 0);
+                if (fast)
+                {
+                    if (Master.ContainsKey(start))
+                        Master.Remove(start);
+                        //MasterDif.Add(start, 0);
+                }
+                else
+                {
+                    if (!MasterDif.ContainsKey(start))
+                        MasterDif.Add(start, 0);
+                }
+                
+             
                 //Master.Remove(start);
                 return;
             }
@@ -491,9 +515,11 @@ namespace EvoEditApp
             Mblist.Add(GetMasterBlock(start, new Vector3i((start.X + offX),  (start.Y + ( offY)), (start.Z + (offZ))), type, r));
             foreach (var v in mastlist)
             {
-                if(!MasterDif.ContainsKey(v))
-                    MasterDif.Add(v, 0);
-                //Master.Remove(v);
+                if(fast)
+                    Master.Remove(v);
+                else
+                    if(!MasterDif.ContainsKey(v))
+                        MasterDif.Add(v, 0);
             }
         }
 
@@ -523,7 +549,8 @@ namespace EvoEditApp
         internal bool Comp(Vector3i c, int type, int rot)
         {
             if(!Master.ContainsKey(c)) return false;
-            if (MasterDif.ContainsKey(c)) return false;
+            if(!fast)
+                if (MasterDif.ContainsKey(c)) return false;
             if (_ignorePaintFlag)
                 return Master[c].get_Sevo_rot() == rot &&
                        BlockTypes.GetDefault((short)Master[c].get_id()) == BlockTypes.GetDefault((short)type);
