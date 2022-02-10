@@ -914,6 +914,12 @@ namespace EvoEditApp
             slider.Value = voxelres;
         }
 
+        private void OpenColorConfig_click(object sender, RoutedEventArgs e)
+        {
+            var window = new PaintWindow();
+            window.Owner = this;
+            window.Show();
+        }
     }
     
 }

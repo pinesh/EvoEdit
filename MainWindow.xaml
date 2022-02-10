@@ -33,6 +33,8 @@
                     />
                 </StackPanel>
             </HierarchicalDataTemplate>
+
+         
         </ResourceDictionary>
     </Window.Resources>
 
@@ -56,7 +58,7 @@
                     <MenuItem Header="_Model (stl/obj/vl32)" Click="model_button_click"/>
                 </MenuItem>
             <MenuItem x:Name ="ConfigureHeader" Header="_Configure" Width="65" >
-                    <MenuItem Header="_Colors" Click="Coming_Soon"/>
+                    <MenuItem Header="_Colors" Click="OpenColorConfig_click"/>
                     <MenuItem Header="_Block Mapping" Click="Coming_Soon"/>
                 </MenuItem>
                 <MenuItem Header="_Help" Width="94" >
@@ -152,7 +154,7 @@
                     <Label x:Name="label2" Content="Translation Ratio:" HorizontalAlignment="Left" VerticalAlignment="Top"/>
                 </StackPanel>
 
-                <ComboBox x:Name="cmbox_ratio" HorizontalAlignment="Left" Margin="98,82,0,0" VerticalAlignment="Top" Width="39" IsEditable="False"  
+                <ComboBox x:Name="cmbox_ratio" HorizontalAlignment="Left" Margin="98,82,0,0" VerticalAlignment="Top" Width="48" IsEditable="False"  
                           IsReadOnly ="True" Text="Set Scale" SelectionChanged="comboBox_SelectionChanged">
                     <ComboBoxItem>1/8m</ComboBoxItem>
                     <ComboBoxItem>1/4m</ComboBoxItem>
