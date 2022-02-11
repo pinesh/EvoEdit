@@ -75,7 +75,7 @@ namespace EvoEditApp
 
         private void prompt_path()
         {
-            if (MessageBox.Show("You have not set an output folder, would you like to do so now?",
+            if (MessageBox.Show("You have not set an output folder, would you like to do so now? This is where your Starship Evo Blueprints will appear.",
                     "Set output folder",
                     MessageBoxButton.YesNo,
                     MessageBoxImage.Warning) == MessageBoxResult.Yes)
@@ -479,7 +479,7 @@ namespace EvoEditApp
 
         private void Open_Github_Guide(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("To Import a StarMade blueprint: [FILE->IMPORT->Folder/Blueprint(.sment)] [READ BLUEPRINT] [IMPORT BLUEPRINT]\n To Import a 3D Object: [FILE->IMPORT->object)][READ OBJECT][IMPORT BLUEPRINT]\n ");
+            MessageBox.Show("To Import a StarMade blueprint: [IMPORT->Starmade->Folder/Blueprint(.sment)] [READ BLUEPRINT] [EXPORT BLUEPRINT]\n To Import a 3D Object: [IMPORT->object)][READ OBJECT][EXPORT BLUEPRINT]\n ");
         }
 
         private void Open_Github(object sender, RoutedEventArgs e)
@@ -513,8 +513,10 @@ namespace EvoEditApp
             checkBox_Paint.IsEnabled = true;
             cmbox_ratio.IsEnabled = true;
             groupBox.IsEnabled = true;
-            btn_readSM.IsEnabled = true;
-            btn_readObj.IsEnabled = true;
+            if(lbl_current.Content.ToString().Length != 0)
+                btn_readSM.IsEnabled = true;
+            if(lbl_objfile.Content.ToString().Length != 0)
+                btn_readObj.IsEnabled = true;
             checkBox_Paint_Copy.IsEnabled = true;
             slider.IsEnabled = true;
         }

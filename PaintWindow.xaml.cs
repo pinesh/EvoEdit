@@ -332,6 +332,7 @@ namespace EvoEditApp
             MyListBoxData.Clear();
             OpenFileDialog openFileDlg = new OpenFileDialog();
             openFileDlg.DefaultExt = ".sevo";
+            openFileDlg.Filter = "Blueprint (*.sevo)|*.sevo";
             Nullable<bool> result = openFileDlg.ShowDialog();
             if (result == true)
             {
