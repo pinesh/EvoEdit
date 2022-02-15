@@ -13,12 +13,13 @@ namespace testapp1
         private readonly int _int24;
         private readonly int _version;
         public bool Visited;
-
-        public BlockBit(int i, int v, bool u = false)
+        public bool invert;
+        public BlockBit(int i, int v, bool u = false,bool inv=false)
         {
             _int24 = i;
             _version = v;
             Visited = u;
+            invert = inv;
         }
 
         public int get_int_24()
@@ -79,7 +80,12 @@ namespace testapp1
 
         public int get_Sevo_rot()
         {
-            return get_Sevo_rot2();
+            return invert ? 2 : get_Sevo_rot2();
+        }
+
+        public void markInvert()
+        {
+            invert = true;
         }
 
         public int get_sevo_slabs(int r, int a)
@@ -230,7 +236,7 @@ namespace testapp1
                     {//0 FIXED THE HEPTA
                         case 1:
                             if (BlockTypes.IsWedge(id)) return 6;
-                            return 23;//6//FUCKING HEPTA (NO 7)22 
+                            return 11;//6//FUCKING HEPTA (NO 7)22 //23 left green was used?
                         case 2:
                             if (BlockTypes.IsWedge(id)) return 5;
                             return 8; //5

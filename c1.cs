@@ -386,7 +386,37 @@ namespace EvoEditApp
             }
         }
 
-       
+
+        public int this[int i]
+        {
+            get
+            {
+                switch (i)
+                {
+                    case 0:
+                        return this.X;
+                    case 1:
+                        return this.Y;
+                    default:
+                        return this.Z;
+                }
+            }
+            set
+            {
+                switch (i)
+                {
+                    case 0:
+                      this.X = value;
+                      break;
+                    case 1:
+                        this.Y = value;
+                        break;
+                    default:
+                       this.Z = value;
+                       break;
+                }
+            }
+        }
     }
 
 

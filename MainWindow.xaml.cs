@@ -323,7 +323,7 @@ namespace EvoEditApp
                     worker.DoWork += worker_write;
                     worker.ProgressChanged += worker_ProgressChanged;
                     worker.RunWorkerCompleted += worker_RunWorkerCompleted;
-                    worker.RunWorkerAsync(new Tuple<List<LoadInstance>, bool>(_loadedInstances, checkBox_Optimize.IsChecked.Value));
+                    worker.RunWorkerAsync(new Tuple<List<LoadInstance>, bool,bool,int>(_loadedInstances, checkBox_Optimize.IsChecked.Value,checkBox_Sym_Test.IsChecked.Value,_axis));
                     break;
             }
         }
@@ -335,27 +335,26 @@ namespace EvoEditApp
         void worker_write(object sender, DoWorkEventArgs e)
         {
             int i = 1;
-           ((Tuple<List<LoadInstance>, bool>)e.Argument).Deconstruct(out List<LoadInstance> ls, out bool fast);
+           ((Tuple<List<LoadInstance>, bool,bool,int>)e.Argument).Deconstruct(out List<LoadInstance> ls, out bool fast,out bool sym,out int axis);
             try
             {
                 foreach (var l in ls)
                 {
                     UpdateProgress(0, $"Initializing: {i}/{ls.Count}");
-                    Voxel_Import Vi = new Voxel_Import(l.blocks, l.min, _scale, IgnorePaint, l.capturescale,fast);
+                    Voxel_Import Vi = new Voxel_Import(l.blocks, l.min, _scale, IgnorePaint, l.capturescale,fast,sym);
                     Vi.PropertyChanged += (s, ev) =>
                     {
                         (sender as BackgroundWorker).ReportProgress(int.Parse(ev.PropertyName.ToString()));
                     };
                     UpdateProgress(0, $"Optimizing:{i}/{ls.Count}");
-                    Vi.Optimize();
+                    Vi.Optimize(axis);
                     //UpdateProgress(interval, "");
                     UpdateProgress(0, $"Writing:{i}/{ls.Count}");
                     WriteSevo(Path.Combine(_globaldestinationpath, l.newfilename), Vi, _scale);
                     i++;
                 }
             }
-            catch (Exception ex)
-            {
+            catch (Exception ex) {
                 Console.WriteLine($"Thread Abort Exception {ex}");
                 MessageBox.Show($"Unable to Import: {ex.Message}", "Import error", MessageBoxButton.OK,
                     MessageBoxImage.Error);
@@ -501,6 +500,7 @@ namespace EvoEditApp
             groupBox.IsEnabled = false;
             checkBox_Paint_Copy.IsEnabled = false;
             slider.IsEnabled = false;
+            checkBox_Sym_Test.IsEnabled = false;
         }
 
         private void Unblocker()
@@ -518,6 +518,7 @@ namespace EvoEditApp
             if(lbl_objfile.Content.ToString().Length != 0)
                 btn_readObj.IsEnabled = true;
             checkBox_Paint_Copy.IsEnabled = true;
+            checkBox_Sym_Test.IsEnabled = true;
             slider.IsEnabled = true;
         }
 
@@ -556,7 +557,6 @@ namespace EvoEditApp
             MessageBox.Show(
                 ">Optimize (All): Should EvoEdit attempt to optimize the blocks on the currently loaded model (recommended)\n\n >IgnorePaint (StarMade): Convert all blocks to a base color (Will affect merging)\n\n >IgnoreSlabs (StarMade): Should the Importer ignore slab blocks? \n\n >Translation Ratio (All): Will port the blueprint into the set scale (1/8thm to 32m)",
                 "Settings", MessageBoxButton.OK, MessageBoxImage.Information);
-
         }
 
         private void HelpStarmade_Click(object sender, RoutedEventArgs e)
@@ -565,7 +565,6 @@ namespace EvoEditApp
                 "In StarMade, Docked entities (Turrets/Logic) and treated as separate entities and are named ATTACHED-X.\n\n Attached Entities can have their own Attached Entities. Block Data is found in the DATA folder.\n\n Selecting an ATTACHED folder will attempt to import the selected entity with it's own name.",
                 "StarMade", MessageBoxButton.OK, MessageBoxImage.Information);
         }
-
 
         public struct LoadInstance
         {
@@ -576,7 +575,6 @@ namespace EvoEditApp
             public int capturescale;
 
         }
-
 
         void worker_RunParseWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
@@ -813,10 +811,6 @@ namespace EvoEditApp
 
         }
 
-
-
-     
-
         private void btn_readObj_Click(object sender, RoutedEventArgs e)
         {
             try
@@ -921,6 +915,19 @@ namespace EvoEditApp
             var window = new PaintWindow();
             window.Owner = this;
             window.Show();
+        }
+
+        private int _axis = 0;
+        private void comboBox_Axis_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            var cm = (ComboBox)sender;
+            _axis = cm.Items.IndexOf(cm.SelectedItem);
+        }
+
+        public bool UseAxis = false;
+        private void checkBox_Axis_Checked(object sender, RoutedEventArgs e)
+        {
+            UseAxis = !UseAxis;
         }
     }
     

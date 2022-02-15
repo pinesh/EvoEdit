@@ -34,7 +34,7 @@
                 </StackPanel>
             </HierarchicalDataTemplate>
 
-         
+
         </ResourceDictionary>
     </Window.Resources>
 
@@ -57,7 +57,7 @@
                     </MenuItem>
                     <MenuItem Header="_Model (stl/obj/vl32)" Click="model_button_click"/>
                 </MenuItem>
-            <MenuItem x:Name ="ConfigureHeader" Header="_Configure" Width="65" >
+                <MenuItem x:Name ="ConfigureHeader" Header="_Configure" Width="65" >
                     <MenuItem Header="_Colors" Click="OpenColorConfig_click"/>
                     <MenuItem Header="_Block Mapping" Click="Coming_Soon"/>
                 </MenuItem>
@@ -65,7 +65,7 @@
                     <MenuItem Header="_Guide" Click ="Open_Github_Guide" />
                     <MenuItem Header="_Github"  Click ="Open_Github" />
                 </MenuItem>
-                </Menu>
+            </Menu>
         </DockPanel>
 
         <GroupBox x:Name="groupBox" Header="Starmade" HorizontalAlignment="Left" Height="355" Margin="0,23,0,0" VerticalAlignment="Top" Width="338">
@@ -145,16 +145,17 @@
                 </StatusBarItem>
             </StatusBar>
         </DockPanel>
-        <GroupBox x:Name="groupBox_Copy" Header="Settings" HorizontalAlignment="Left" Height="152" Margin="343,23,0,0" VerticalAlignment="Top" Width="160">
+        <GroupBox x:Name="groupBox_Copy" Header="Settings" HorizontalAlignment="Left" Height="185" Margin="343,23,0,0" VerticalAlignment="Top" Width="160">
             <Grid>
                 <StackPanel Orientation="Vertical" Margin="0,0,0,10">
                     <CheckBox x:Name="checkBox_Optimize" Content="Use Fast Optimize" HorizontalAlignment="Left" Height="26" VerticalAlignment="Top" Width="124" IsChecked="True"/>
                     <CheckBox x:Name="checkBox_Paint" Content="Ignore Paint" HorizontalAlignment="Left" Height="26"  VerticalAlignment="Top" Width="108" IsChecked="False" Unchecked="checkBox_Paint_Checked" Checked="checkBox_Paint_Checked"/>
                     <CheckBox x:Name="checkBox_Paint_Copy" Content="Ignore Slabs" HorizontalAlignment="Left" Height="26" VerticalAlignment="Top" Width="108" IsChecked="False" Checked="checkBox_Slab_Checked" Unchecked="checkBox_Slab_Checked"/>
                     <Label x:Name="label2" Content="Translation Ratio:" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                    <CheckBox x:Name="checkBox_Sym_Test" Content="Axis Symmetry" HorizontalAlignment="Left" Height="26" VerticalAlignment="Top" Width="108" IsChecked="True" Checked="checkBox_Slab_Checked" Unchecked="checkBox_Axis_Checked"/>
                 </StackPanel>
 
-                <ComboBox x:Name="cmbox_ratio" HorizontalAlignment="Left" Margin="98,82,0,0" VerticalAlignment="Top" Width="48" IsEditable="False"  
+                <ComboBox x:Name="cmbox_ratio" HorizontalAlignment="Left" Margin="100,81,0,0" VerticalAlignment="Top" Width="48" IsEditable="False"  
                           IsReadOnly ="True" Text="Set Scale" SelectionChanged="comboBox_SelectionChanged">
                     <ComboBoxItem>1/8m</ComboBoxItem>
                     <ComboBoxItem>1/4m</ComboBoxItem>
@@ -166,11 +167,16 @@
                     <ComboBoxItem>16m</ComboBoxItem>
                     <ComboBoxItem>32m</ComboBoxItem>
                 </ComboBox>
+                <ComboBox x:Name="cmbox_axis" HorizontalAlignment="Left" Margin="100,103,0,0" VerticalAlignment="Top" Width="48" IsEditable="False"  
+                    IsReadOnly ="True"  SelectionChanged="comboBox_Axis_SelectionChanged">
+                    <ComboBoxItem IsSelected="True" Content="x"/>
+                    
+                </ComboBox>
             </Grid>
 
         </GroupBox>
 
-        <GroupBox x:Name="groupBox1" Header="3D" HorizontalAlignment="Left" Height="136" Margin="344,175,0,0" VerticalAlignment="Top" Width="160">
+        <GroupBox x:Name="groupBox1" Header="3D" HorizontalAlignment="Left" Height="136" Margin="343,208,0,0" VerticalAlignment="Top" Width="160">
 
             <StackPanel Orientation="Vertical">
                 <StackPanel Orientation="Horizontal">
@@ -202,12 +208,12 @@
                                        Foreground="Gray" FontSize="10" FontWeight="Bold"/>
                     </StackPanel>
                 </Button>
-          
+
 
 
             </StackPanel>
         </GroupBox>
-        <Button x:Name="Help3D" HorizontalAlignment="Left" Height="15" Margin="495,178,0,0" VerticalAlignment="Top" Width="15" RenderTransformOrigin="9.688,1.225" Click="Help3D_Click" >
+        <Button x:Name="Help3D" HorizontalAlignment="Left" Height="14" Margin="494,212,0,0" VerticalAlignment="Top" Width="15" RenderTransformOrigin="9.688,1.225" Click="Help3D_Click" >
             <TextBlock Text="?" Margin="0,-3,0,0"/>
             <Button.Resources>
                 <Style TargetType="Border">
@@ -235,7 +241,7 @@
             </Button.Resources>
             <TextBlock Text="?" Margin="0,-3,0,0"/>
         </Button>
-        <Button x:Name="btn_import" IsEnabled="False" VerticalAlignment="Top" Height="67" Click="button_Click_1" Margin="344,311,11,0">
+        <Button x:Name="btn_import" IsEnabled="False" VerticalAlignment="Top" Height="32" Click="button_Click_1" Margin="344,346,11,0">
             <Button.Resources>
                 <Style TargetType="{x:Type Border}">
                     <Setter Property="CornerRadius" Value="2"/>
