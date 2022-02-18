@@ -135,12 +135,24 @@ namespace EvoEditApp
         {
             return Vector3i.DistanceSquared(this, v);
         }
-
         public override int GetHashCode()
         {
+            unchecked 
+            {
+                int hash = 17;
+                hash = hash * 23 + this.X.GetHashCode();
+                hash = hash * 23 + this.Y.GetHashCode();
+                hash = hash * 23 + this.Z.GetHashCode();
+                return hash;
+            }
+        }
+        /*
+        public override int GetHashCode()
+        {
+
             return this.X ^ this.Y << 2 ^ this.Z >> 2;
         }
-
+        */
         public ulong GetSeed()
         {
             return (ulong)((long)this.X ^ (long)this.Y << 2 ^ (long)((ulong)((long)this.Z) >> 2));

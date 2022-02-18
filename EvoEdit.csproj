@@ -160,6 +160,7 @@
     <Compile Include="save.cs" />
     <Compile Include="SMD2.cs" />
     <Compile Include="SM_Load.cs" />
+    <Compile Include="Voxel_Corrections.cs" />
     <Compile Include="Voxel_Import.cs" />
     <Compile Include="PaintWindow.xaml.cs">
       <DependentUpon>PaintWindow.xaml</DependentUpon>
