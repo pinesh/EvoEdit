@@ -2,10 +2,12 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using System.Web.UI.Design.WebControls;
 using System.Windows.Documents;
 using ICSharpCode.SharpZipLib.Zip;
 using testapp1;
 using Xceed.Wpf.AvalonDock.Converters;
+using Xceed.Wpf.Toolkit;
 
 namespace EvoEditApp
 {
@@ -245,11 +247,26 @@ namespace EvoEditApp
         internal void Merge()
         {
             _ok = new SortedDictionary<Vector3i, BlockBit>(new VoxelCorrections.Vector3IComparer());
+            /*
+            List<Tuple<Vector3i,Vector3i>> updateKeys = new List<Tuple<Vector3i, Vector3i>>();
             foreach (var keyPair in Master)
             {
-                //Console.WriteLine($"block type {keypair.Value.get_id()}, block axis {keypair.Value.get_axis_rotation()}, block rotation {keypair.Value.get_rotations()}");
+                if (keyPair.Value.GetSevoId() == 197)
+                {
+                    Vector3i vec = stretchTriangles(keyPair.Key, keyPair.Value);
+                    if(vec != new Vector3i(0,0,0))
+                        updateKeys.Add(new Tuple<Vector3i, Vector3i>(keyPair.Key,vec));
+                }
                 _ok.Add(keyPair.Key, keyPair.Value);
             }
+            foreach (var keyPair in updateKeys)
+            {
+                var b = Master[keyPair.Item1];
+                b.wedgeFactor = keyPair.Item2;
+                Master[keyPair.Item1] = b;
+            }
+            */
+
             int og = _ok.Count;
             var cur = 0;
             int i = 0;
@@ -299,7 +316,7 @@ namespace EvoEditApp
         /// <param name="type">type of origin block</param>
         /// <param name="r"> rotation of origin block</param>
         /// <returns></returns>
-        internal List<Vector3i> GetAllPoints(Vector3i start, Vector3i end, int type, int r)
+        internal List<Vector3i> GetAllPoints(Vector3i start, Vector3i end, int type, int r,Vector3i wedge)
         {
             var points = new List<Vector3i>();
             for (var yIndex = start.Y; yIndex <= end.Y; yIndex ++)
@@ -311,7 +328,7 @@ namespace EvoEditApp
                     for (var xIndex = start.X; xIndex <= end.X; xIndex ++)
                     {
                         var v = new Vector3i(xIndex, yIndex, zIndex);
-                        if (!Comp(v, type, r)) return points;
+                        if (!Comp(v, type, r,wedge)) return points;
                         points.Add(v);
                     }
                 }
@@ -320,7 +337,10 @@ namespace EvoEditApp
             return points;
         }
 
-        internal List<Vector3i> GetAllPointsInverted(Vector3i start, Vector3i end, int type, int r,int axis)
+    
+        
+
+        internal List<Vector3i> GetAllPointsInverted(Vector3i start, Vector3i end, int type, int r,int axis,Vector3i wedge)
         {//whatever axis is, is the way we wish to traverse
             var points = new List<Vector3i>();
 
@@ -336,7 +356,7 @@ namespace EvoEditApp
                             for (var xIndex = start.X; xIndex >= end.X; xIndex--)
                             {
                                 var v = new Vector3i(xIndex, yIndex, zIndex);
-                                if (!Comp(v, type, r)) return points;
+                                if (!Comp(v, type, r,wedge)) return points;
                                 points.Add(v);
                             }
                         }
@@ -352,7 +372,7 @@ namespace EvoEditApp
                             for (var xIndex = start.X; xIndex <= end.X; xIndex++)
                             {
                                 var v = new Vector3i(xIndex, yIndex, zIndex);
-                                if (!Comp(v, type, r)) return points;
+                                if (!Comp(v, type, r,wedge)) return points;
                                 points.Add(v);
                             }
                         }
@@ -368,7 +388,7 @@ namespace EvoEditApp
                             for (var xIndex = start.X; xIndex <= end.X; xIndex++)
                             {
                                 var v = new Vector3i(xIndex, yIndex, zIndex);
-                                if (!Comp(v, type, r)) return points;
+                                if (!Comp(v, type, r,wedge)) return points;
                                 points.Add(v);
                             }
                         }
@@ -380,11 +400,28 @@ namespace EvoEditApp
 
 
 
-        internal Tuple<List<Vector3i>,int> IterateStretch(int c, Vector3i start,Vector3i end, List<Vector3i> mastlist,int type,byte r,int m,int dirX = 0,int dirY = 0,int dirZ = 0)
+        internal Tuple<List<Vector3i>,int> IterateStretch(int style,int c, Vector3i start,Vector3i end, List<Vector3i> mastlist,int type,byte r,int m, Vector3i wedge, int dirX = 0,int dirY = 0,int dirZ = 0)
         {
+            if (BlockTypes.IsSlab((short)type))
+            {
+                //slab fixes. 
+                switch (r)
+                {
+                    
+                    case 12: //right side
+                    case 8: //left side
+                        if (dirZ == 1)//this seems to actually be left right? x and z might not be the same across starmade and sevo.
+                        {
+                            //mastlist.Add(start);
+                           return new Tuple<List<Vector3i>, int>(mastlist, 0);
+                        }
+                        break;
+                }
+            }
+
             while (c < 16)
             {
-                var lv = GetAllPoints(new Vector3i(start.X + (c * dirX), start.Y + (c * dirY), start.Z + (c *dirZ)), new Vector3i(end.X + (c * dirX), end.Y+ (c * dirY), end.Z+ (c * dirZ)), type, r:r);
+                var lv = GetAllPoints(new Vector3i(start.X + (c * dirX), start.Y + (c * dirY), start.Z + (c *dirZ)), new Vector3i(end.X + (c * dirX), end.Y+ (c * dirY), end.Z+ (c * dirZ)), type, r:r, wedge);
                 if (mastlist.Count + lv.Count == (c+1)*m)
                 {
                     mastlist.AddRange(lv);
@@ -398,7 +435,7 @@ namespace EvoEditApp
             return new Tuple<List<Vector3i>, int>(mastlist,c-1);
         }
 
-        internal Tuple<List<Vector3i>, int> IterateStretchInvert(int c, Vector3i start, Vector3i end, List<Vector3i> mastlist, int type, byte r, int m,int axis, int dirX = 0, int dirY = 0, int dirZ = 0)
+        internal Tuple<List<Vector3i>, int> IterateStretchInvert(int c, Vector3i start, Vector3i end, List<Vector3i> mastlist, int type, byte r, int m,int axis,Vector3i wedge, int dirX = 0, int dirY = 0, int dirZ = 0)
         {
             while (c < 16)
             {
@@ -406,13 +443,13 @@ namespace EvoEditApp
                 switch (axis)
                 {
                     case 0:
-                         lv = GetAllPointsInverted(new Vector3i(start.X - (c * dirX), start.Y + (c * dirY), start.Z + (c * dirZ)), new Vector3i(end.X - (c * dirX), end.Y + (c * dirY), end.Z + (c * dirZ)), type, r: r, axis: axis);
+                         lv = GetAllPointsInverted(new Vector3i(start.X - (c * dirX), start.Y + (c * dirY), start.Z + (c * dirZ)), new Vector3i(end.X - (c * dirX), end.Y + (c * dirY), end.Z + (c * dirZ)), type, r: r, axis: axis, wedge);
                         break;
                     case 1:
-                         lv = GetAllPointsInverted(new Vector3i(start.X + (c * dirX), start.Y - (c * dirY), start.Z + (c * dirZ)), new Vector3i(end.X + (c * dirX), end.Y - (c * dirY), end.Z + (c * dirZ)), type, r: r, axis: axis);
+                         lv = GetAllPointsInverted(new Vector3i(start.X + (c * dirX), start.Y - (c * dirY), start.Z + (c * dirZ)), new Vector3i(end.X + (c * dirX), end.Y - (c * dirY), end.Z + (c * dirZ)), type, r: r, axis: axis, wedge);
                         break;
                     default:
-                         lv = GetAllPointsInverted(new Vector3i(start.X + (c * dirX), start.Y + (c * dirY), start.Z - (c * dirZ)), new Vector3i(end.X + (c * dirX), end.Y + (c * dirY), end.Z - (c * dirZ)), type, r: r, axis: axis);
+                         lv = GetAllPointsInverted(new Vector3i(start.X + (c * dirX), start.Y + (c * dirY), start.Z - (c * dirZ)), new Vector3i(end.X + (c * dirX), end.Y + (c * dirY), end.Z - (c * dirZ)), type, r: r, axis: axis, wedge);
                         break;
                 }
                 if (mastlist.Count + lv.Count == (c + 1) * m)
@@ -460,41 +497,64 @@ namespace EvoEditApp
 
             //will affect blocks
 
+          //  if(b.wedgeFactor != new Vector3i(0,0,0))
+                //Console.WriteLine(b.wedgeFactor.ToString());
 
-
-            IterateStretch(0, start,start, mastlist, type, r,m:1, dirX: 1).Deconstruct(out mastlist,out _);
+            IterateStretch(style,0, start,start, mastlist, type, r,m:1, b.wedgeFactor, dirX: 1).Deconstruct(out mastlist,out _);
             
             var xcount = mastlist.Count - 1; //take off self.
 
             //we have wedges done.
             if ((style == 197 || style == 168) && xcount != 0)
             {
-                SwapBlock(mastlist,start,type,r,xcount);
+                SwapBlock(b.wedgeFactor,mastlist,start,type,r,xcount);
                 return;
             }
 
             //will affect blocks
-            IterateStretch(1, start, new Vector3i(start.X+(xcount),start.Y,start.Z), mastlist, type, r, m: (xcount + 1), dirZ: 1).Deconstruct(out mastlist,out int zcount);
+            IterateStretch(style, 1, start, new Vector3i(start.X+(xcount),start.Y,start.Z), mastlist, type, r, m: (xcount + 1), b.wedgeFactor, dirZ: 1).Deconstruct(out mastlist,out int zcount);
 
             //we have wedges done.
             if ((style == 197 || style == 168) && zcount != 0)
             {
-                SwapBlock(mastlist,start,type,r,xcount,0,zcount);
+                SwapBlock(b.wedgeFactor, mastlist,start,type,r,xcount,0,zcount);
                 return;
             }
 
             if (style >= 243 && style <= 245 && zcount != 0 && xcount != 0) //slabs can only have two stretches
             {
-                SwapBlock(mastlist,start,type,r,xcount,0,zcount);
+                SwapBlock(b.wedgeFactor, mastlist,start,type,r,xcount,0,zcount);
                 return;
             }
 
             //will affect blocks
 
-            IterateStretch(1,start, new Vector3i(start.X + (xcount), start.Y, start.Z + (zcount)),mastlist,type,r,m: (xcount + 1) * (zcount + 1), dirY:1).Deconstruct(out mastlist, out int ycount);
+            IterateStretch(style, 1,start, new Vector3i(start.X + (xcount), start.Y, start.Z + (zcount)),mastlist,type,r,m: (xcount + 1) * (zcount + 1), b.wedgeFactor, dirY:1).Deconstruct(out mastlist, out int ycount);
             //every point in this list becomes an mblock. 
-            SwapBlock(mastlist, start, type, r, xcount, ycount, zcount);
+            SwapBlock(b.wedgeFactor, mastlist, start, type, r, xcount, ycount, zcount);
             return;
+        }
+
+        private void SwapBlock(Vector3i bWedgeFactor, List<Vector3i> mastlist, Vector3i start, int type, byte r, int offX = 0, int offY = 0, int offZ = 0)
+        {
+            if (bWedgeFactor != new Vector3i(0, 0, 0))
+            {
+                Console.WriteLine(bWedgeFactor.ToString());
+            }
+
+            Mblist.Add(BlockTypes.IsHull((short)type)
+                ? GetMasterBlock(start, new Vector3i((start.X + offX), (start.Y + (offY)), (start.Z + (offZ))), type, 0)
+                : GetMasterBlock(start, new Vector3i((start.X + offX + bWedgeFactor.X), (start.Y + (offY) + bWedgeFactor.Y), (start.Z + (offZ) + bWedgeFactor.Z)), type, r));
+            //Mblist.Add(GetMasterBlock(start, new Vector3i((start.X + offX+bWedgeFactor.X), (start.Y + (offY) + bWedgeFactor.Y), (start.Z + (offZ) + bWedgeFactor.Z)), type, r));
+            //Mblist.Add(GetMasterBlock(start, new Vector3i((start.X + offX), (start.Y + (offY)), (start.Z + (offZ) + bWedgeFactor.Z)), type, r));
+            foreach (var v in mastlist)
+            {
+                if (fast)
+                    Master.Remove(v);
+                else
+                if (!MasterDif.ContainsKey(v))
+                    MasterDif.Add(v, 0);
+            }
         }
 
 
@@ -514,7 +574,7 @@ namespace EvoEditApp
 
             //will affect blocks
 
-            IterateStretchInvert(0, start, start, mastlist, type, r,axis:axis, m: 1, dirX: 1).Deconstruct(out mastlist, out _);
+            IterateStretchInvert(0, start, start, mastlist, type, r,axis:axis, m: 1, wedge:b.wedgeFactor, dirX: 1).Deconstruct(out mastlist, out _);
 
             var xcount = mastlist.Count - 1; //take off self.
 
@@ -523,11 +583,11 @@ namespace EvoEditApp
             int zcount = 0;
             if (axis == 0 )
             {
-                IterateStretchInvert(1, start, new Vector3i(start.X - (xcount), start.Y, start.Z), mastlist, type, r, axis: axis, m: (xcount + 1), dirZ: 1).Deconstruct(out mastlist, out  zcount);
+                IterateStretchInvert(1, start, new Vector3i(start.X - (xcount), start.Y, start.Z), mastlist, type, r, axis: axis, m: (xcount + 1),wedge: b.wedgeFactor, dirZ: 1).Deconstruct(out mastlist, out  zcount);
             }
             else
             {
-                IterateStretchInvert(1, start, new Vector3i(start.X + (xcount), start.Y, start.Z), mastlist, type, r, axis: axis, m: (xcount + 1), dirZ: 1).Deconstruct(out mastlist, out  zcount);
+                IterateStretchInvert(1, start, new Vector3i(start.X + (xcount), start.Y, start.Z), mastlist, type, r, axis: axis, m: (xcount + 1), wedge: b.wedgeFactor, dirZ: 1).Deconstruct(out mastlist, out  zcount);
             }
            
             //will affect blocks
@@ -535,13 +595,13 @@ namespace EvoEditApp
             switch (axis)
             {
                 case 0:
-                    IterateStretchInvert(1, start, new Vector3i(start.X - (xcount), start.Y, start.Z + (zcount)), mastlist, type, r, axis: axis, m: (xcount + 1) * (zcount + 1), dirY: 1).Deconstruct(out mastlist, out  ycount);
+                    IterateStretchInvert(1, start, new Vector3i(start.X - (xcount), start.Y, start.Z + (zcount)), mastlist, type, r, axis: axis, m: (xcount + 1) * (zcount + 1), wedge: b.wedgeFactor, dirY: 1).Deconstruct(out mastlist, out  ycount);
                     break;
                 case 2:
-                    IterateStretchInvert(1, start, new Vector3i(start.X + (xcount), start.Y, start.Z - (zcount)), mastlist, type, r, axis: axis, m: (xcount + 1) * (zcount + 1), dirY: 1).Deconstruct(out mastlist, out  ycount);
+                    IterateStretchInvert(1, start, new Vector3i(start.X + (xcount), start.Y, start.Z - (zcount)), mastlist, type, r, axis: axis, m: (xcount + 1) * (zcount + 1), wedge: b.wedgeFactor, dirY: 1).Deconstruct(out mastlist, out  ycount);
                     break;
                 default:
-                    IterateStretchInvert(1, start, new Vector3i(start.X + (xcount), start.Y, start.Z + (zcount)), mastlist, type, r, axis: axis, m: (xcount + 1) * (zcount + 1), dirY: 1).Deconstruct(out mastlist, out  ycount);
+                    IterateStretchInvert(1, start, new Vector3i(start.X + (xcount), start.Y, start.Z + (zcount)), mastlist, type, r, axis: axis, m: (xcount + 1) * (zcount + 1), wedge: b.wedgeFactor, dirY: 1).Deconstruct(out mastlist, out  ycount);
                     break;
             }
             //  IterateStretchInvert(1, start, new Vector3i(start.X + (xcount), start.Y, start.Z + (zcount)), mastlist, type, r, axis: axis, m: (xcount + 1) * (zcount + 1), dirY: 1).Deconstruct(out mastlist, out int ycount);
@@ -550,7 +610,7 @@ namespace EvoEditApp
             return;
         }
 
-
+        /*
         internal void SwapBlock(List<Vector3i> mastlist,Vector3i start,int type, byte r, int offX = 0, int offY = 0, int offZ = 0)
         {
             Mblist.Add(BlockTypes.IsHull((short)type)
@@ -565,6 +625,7 @@ namespace EvoEditApp
                         MasterDif.Add(v, 0);
             }
         }
+        */
         internal void SwapBlockINV(List<Vector3i> mastlist, Vector3i start, int type, byte r,int axis, int offX = 0, int offY = 0, int offZ = 0)
         {
             switch (axis)
@@ -573,10 +634,10 @@ namespace EvoEditApp
                     Mblist.Add(GetMasterBlock(start, new Vector3i((start.X - offX), (start.Y + (offY)), (start.Z + (offZ))), type, 2));
                     break;
                 case 1:
-                    Mblist.Add(GetMasterBlock(start, new Vector3i((start.X + offX), (start.Y - (offY)), (start.Z + (offZ))), type, 2));
+                    Mblist.Add(GetMasterBlock(start, new Vector3i((start.X + offX), (start.Y - (offY)), (start.Z + (offZ))), type, 0));
                     break;
                 default:
-                    Mblist.Add(GetMasterBlock(start, new Vector3i((start.X + offX), (start.Y + (offY)), (start.Z - (offZ))), type, 2));
+                    Mblist.Add(GetMasterBlock(start, new Vector3i((start.X + offX), (start.Y + (offY)), (start.Z - (offZ))), type, 4));
                     break;
             }
             //Mblist.Add(GetMasterBlock(start, new Vector3i((start.X + offX), (start.Y + (offY)), (start.Z + (offZ))), type, r));
@@ -612,7 +673,7 @@ namespace EvoEditApp
             };
         }
 
-        internal bool Comp(Vector3i c, int type, int rot)
+        internal bool Comp(Vector3i c, int type, int rot,Vector3i wedge)
         {
             if(!Master.ContainsKey(c)) return false;
             if(!fast)
@@ -620,6 +681,7 @@ namespace EvoEditApp
             if (_ignorePaintFlag)
                 return Master[c].get_Sevo_rot() == rot && BlockTypes.GetDefault((short)Master[c].get_id()) == BlockTypes.GetDefault((short)type);
             return Master[c].get_Sevo_rot() == rot && Master[c].get_id() == type;
+            //&& Master[c].wedgeFactor == wedge;
         }
 
         internal struct MasterBlock

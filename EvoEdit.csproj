@@ -160,6 +160,7 @@
     <Compile Include="save.cs" />
     <Compile Include="SMD2.cs" />
     <Compile Include="SM_Load.cs" />
+    <Compile Include="Vector3i.cs" />
     <Compile Include="Voxel_Corrections.cs" />
     <Compile Include="Voxel_Import.cs" />
     <Compile Include="PaintWindow.xaml.cs">
@@ -175,7 +176,7 @@
     </Compile>
     <Compile Include="Brick.cs" />
     <Compile Include="BrickInstanceData.cs" />
-    <Compile Include="c1.cs" />
+    <Compile Include="BrickEntityMp.cs" />
     <Compile Include="MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>

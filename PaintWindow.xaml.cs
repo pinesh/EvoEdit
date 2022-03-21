@@ -326,6 +326,8 @@ namespace EvoEditApp
 
 
         private string currentfile;
+
+        public BrickEntityMp old;
         //Open a Stevo Blueprint
         private void button_Click_1(object sender, RoutedEventArgs e)
         {
@@ -340,11 +342,21 @@ namespace EvoEditApp
                 using (FileStream fs = File.OpenRead(openFileDlg.FileName))
                 {
                     var x = BrickEntityMp.GetSaveFromFile(fs, true);
+                    if (old == null)
+                    {
+                        old = x;
+                    }
+                    else
+                    {
+                        finddiff(old,x);
+                    }
+
                     var s = new StringBuilder();
                     // color = (object)new object[] { paint.X, paint.Y, paint.Z, 255 }
                     Dictionary<sevocol, int> ColorCount = new Dictionary<sevocol, int>();
                     foreach (var d in x.BrickDatas.Datas)
                     {
+                        //Console.WriteLine(d.brickId);
                         var c = new sevocol(d.color);
                         if (ColorCount.ContainsKey(c))
                         {
@@ -392,6 +404,8 @@ namespace EvoEditApp
                 r = (byte)c[0];
                 g = (byte)c[1];
                 b = (byte)c[2];
+                var a = (byte)c[3];
+                //Console.WriteLine(a);
             }
           
 
@@ -406,6 +420,37 @@ namespace EvoEditApp
             }
 
         }
+        internal static ushort range_to_scale(int x, int y, int z)
+        {
+            var u = (ushort)z;
+            u = (ushort)(u << (ushort)4 | (ushort)y);
+            u = (ushort)(u << (ushort)4 | (ushort)x);
+            return u;
+        }
+
+        private void finddiff(BrickEntityMp x, BrickEntityMp y)
+        {
+            
+            int child = 0;
+            int brick = 0;
+            List<List<int>> instance = new List<List<int>>();
+            foreach (BrickDatasSave b in x.BrickDatasChildrens)
+            {
+                var yb = y.BrickDatasChildrens[child];
+                int id = 0;
+                while (id < b.Length)
+                {
+                    if (yb.Datas[id] != b.Datas[id])
+                    {
+                        Console.WriteLine($"{child},{id}");
+                    }
+
+                    id++;
+                }
+                child++;
+            }
+        }
+
         private void button_Click_export(object sender, RoutedEventArgs e)
         {
 
@@ -425,17 +470,109 @@ namespace EvoEditApp
                 }
 
                 Dictionary<sevocol, sevocol> remap = MyListBoxData.Where(cswap => cswap.diff()).ToDictionary(cswap => new sevocol(cswap.ColorOld), cswap => new sevocol(cswap.ColorNew));
+                int sc = 1;
 
-                for (int i = 0; i < x.BrickDatas.Datas.Length; i++)
+                
+
+                List<int> touch = new List<int>() { 84,78, 85, 3, 255, 181 };
+              
+                for (int i = 0; i < x.BrickDatasChildrens.Count; i++)
                 {
-                    var c = new sevocol(x.BrickDatas.Datas[i].color);
-                    if (remap.ContainsKey(c))
+                    if (x.BrickDatasChildrens[i].Datas != null)
                     {
-                        x.BrickDatas.Datas[i].color = remap[c].sevoC();
+                        for (int j = 0; j < x.BrickDatasChildrens[i].Datas.Length; j++)
+                        {
+                            if (x.BrickDatasChildrens[i].Datas[j].brickId != 0)
+                            {
+                                var c = new sevocol(x.BrickDatasChildrens[i].Datas[j].color);
+                                if (remap.ContainsKey(c))
+                                {
+                                    x.BrickDatasChildrens[i].Datas[j].color = remap[c].sevoC();
+                                }
+                            }
+                        }
                     }
                 }
+                
+                //x.BrickDatasChildrens[12].Datas[63].scale = range_to_scale(2, 0, 5);
+                //x.BrickDatasChildrens[1].Datas[1].gridPosition = new Vector3i(0, 2, 0);
+                //x.BrickDatasChildrens[2].Datas[1].gridPosition = new Vector3i(0, 2, 0);
+             
+                int count = 0;
+                int check = 0;
+                for (int i = 0; i < x.BrickDatas.Datas.Length; i++)
+                {
+                    if (x.BrickDatas.Datas[i].brickId != 0)
+                    {
+                        //if (touch.Contains(x.BrickDatas.Datas[i].brickId)) {
+                        //x.BrickDatas.Datas[i].gridPosition.X += 32;
+                        var c = new sevocol(x.BrickDatas.Datas[i].color);
+                        if (remap.ContainsKey(c))
+                        {
+                            x.BrickDatas.Datas[i].color = remap[c].sevoC();
+                        }
+                        
+                    }
+                }
+                           // if (x.BrickDatas.Datas[i].brickId == 3)
+                         //   {
+                           //     x.BrickDatas.Datas[i].brickId = 78;
+                         //   }
+                        //if (x.BrickDatas.Datas[i].brickId == 84)
+                        // {
+                        // x.BrickDatas.Datas[i].gridPosition.X += 12;
+                        // x.BrickDatas.Datas[i].scale = range_to_scale(0, 7, 0);
+                        //x.BrickDatas.Datas[i].gridPosition.X -= 18;
+                        // }
+                        //if (x.BrickDatas.Datas[i].brickId == 80)
+                        //{
+                        // x.BrickDatas.Datas[i].scale = range_to_scale(0, 7, 0);
+                        //  //x.BrickDatas.Datas[i].gridPosition.X -= 18;
+                        //  }
+
+                        //x.BrickDatas.Datas[i].gridPosition = new Vector3i(x.BrickDatas.Datas[i].gridPosition.X,
+                        // (x.BrickDatas.Datas[i].gridPosition.Y / (4 * (int)Math.Pow(2, x.BrickDatas.Datas[i].gridSize))) * 4 * (int)Math.Pow(2, sc), x.BrickDatas.Datas[i].gridPosition.Z);
+                        //x.BrickDatas.Datas[i].gridPosition += new Vector3i(4, 0, 4);
+                        /*
+                          if (x.BrickDatas.Datas[i].brickId == 3)
+                          {
+                            if(check == 1)
+                            {
+                                x.BrickDatas.Datas[i] = x.BrickDatas.Datas[0];
+                            }
+                            else
+                            {
+                                
+                                x.BrickDatas.Datas[i].scale = range_to_scale(0, 7, 0);
+                            }
+                            check = 1;
+                            //x.BrickDatas.Datas[i].scale = 240;
+                            //x.BrickDatas.Datas[i].gridPosition -= 3*x.BrickDatas.Datas[i].gridPosition;
+
+                          }
+                        */
+                        //x.BrickDatas.Datas[i].brickId = 85;
+                        //x.BrickDatas.Datas[i].gridSize = (byte)sc;
+                        //x.BrickDatas.Datas[i].scale = range_to_scale(1,0, 1);
+                      
+                        //count++;
+                        
+
+                    /* { 0, new Vector3i(2, 0, 2) },
+                    { 1, new Vector3i(4, 0, 4) },
+                    { 2, new Vector3i(8, 0, 8) },
+                    { 3, new Vector3i(0, 16, 0) },//1m
+                    { 4, new Vector3i(16, -16, 16) },//2m //8 = 0.375m
+                    { 5, new Vector3i(48, -16, 48) },//4m
+                    { 6, new Vector3i(112,-16, 112) },//8m
+                    { 7, new Vector3i(240, -16, 240) },//16m
+                    { 8, new Vector3i(496, -16, 496) } //32m*/
+
+
+                
 
                 ParentEntity parent = new ParentEntity(x);
+                
                 BrickDatasSave b = new BrickDatasSave()
                 {
                     AdditionalDatas = x.BrickDatas.AdditionalDatas,
@@ -447,7 +584,10 @@ namespace EvoEditApp
                 SaveFileDialog saveFileDialog = new SaveFileDialog();
                 saveFileDialog.Filter = "Blueprint (*.sevo)|*.sevo";
                 if (saveFileDialog.ShowDialog() == true)
-                    parent.SaveToDiskAtPath(saveFileDialog.FileName, false);
+                    parent.SaveToDiskAtPathChild(saveFileDialog.FileName, false,x.BrickDatasChildrens);
+                   // parent.SaveToDiskAtPath(saveFileDialog.FileName, false);
             }
         }
         }}
+
+

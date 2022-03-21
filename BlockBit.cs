@@ -12,6 +12,7 @@ namespace testapp1
     {
         private readonly int _int24;
         private readonly int _version;
+        public Vector3i wedgeFactor;
         public bool Visited;
         public bool invert;
         public BlockBit(int i, int v, bool u = false,bool inv=false)
@@ -19,6 +20,7 @@ namespace testapp1
             _int24 = i;
             _version = v;
             Visited = u;
+            wedgeFactor = new Vector3i(0, 0, 0);
             invert = inv;
         }
 

@@ -91,5 +91,50 @@ namespace EvoEditApp
                 }
             }
         }
+        public void SaveToDiskAtPathChild(string path, bool clearSguid,List<BrickDatasSave> children)
+        {
+            string directoryName = Path.GetDirectoryName(path);
+            if (!Directory.Exists(directoryName))
+            {
+                Directory.CreateDirectory(directoryName);
+            }
+
+            if (File.Exists(path))
+            {
+                if (new FileInfo(path).Length > 1L)
+                {
+                    File.Copy(path, path + "bu", true);
+                }
+                else
+                {
+                    throw new Exception("Error, file is null");
+                }
+            }
+
+            byte[] array;
+            try
+            {
+                BrickEntityMp messagePack = this.GetMessagePack();
+                messagePack.BrickDatasChildrens = children;
+                if (clearSguid)
+                {
+                    messagePack.ClearInstanceData();
+                }
+                // var lz4Options = MessagePackSerializerOptions.Standard.WithCompression(MessagePackCompression.Lz4Block);
+                array = LZ4MessagePackSerializer.Serialize<BrickEntityMp>(messagePack);
+            }
+            catch
+            {
+                throw new Exception("save failed");
+            }
+
+            if (array != null && array.Length != 0)
+            {
+                using (FileStream fileStream = File.Create(path))
+                {
+                    fileStream.Write(array, 0, array.Length);
+                }
+            }
+        }
     }
 }

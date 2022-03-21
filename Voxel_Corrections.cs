@@ -142,6 +142,12 @@ namespace EvoEditApp
         /// <returns>The offset and scale as a vector</returns>
         public static Tuple<ushort, Vector3i> get_scale_wedge(Vector3i start, Vector3i end, int rot,int Scale)
         {
+
+            if (rot == 0)
+            { 
+                if (start.Y != end.Y)
+                    Console.WriteLine(start.ToString()+end.ToString());
+            }
             DeconstructVector(start, end, Scale).Deconstruct(out int x, out int y, out int z);
             int offset = Math.Max(x, Math.Max(y, z)) * 4;
             switch (rot)
