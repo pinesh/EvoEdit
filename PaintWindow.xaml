@@ -20,11 +20,15 @@
 
 
     <Grid Margin="0,0,2,0">
-        <GroupBox x:Name="groupBox1_Copy" Header="Paints" HorizontalAlignment="Left" Height="254" Margin="10,29,0,0" VerticalAlignment="Top" Width="275">
+        <GroupBox x:Name="groupBox1_Copy" Header="Paints" HorizontalAlignment="Left" Height="222" Margin="10,61,0,0" VerticalAlignment="Top" Width="275">
             <ListBox x:Name="ColorBox" HorizontalAlignment="Left" Height="221" Margin="0,6,-2,0" VerticalAlignment="Top" Width="265"  ItemTemplate="{StaticResource ColorTemplate}">
             </ListBox>
         </GroupBox>
-        <Button x:Name="BtnOpenBlueprint" Content="Open Blueprint" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="275" Click="button_Click_1"/>
+        <Button x:Name="BtnOpenBlueprint" Content="Open Blueprint" HorizontalAlignment="Left" Margin="10,41,0,0" VerticalAlignment="Top" Width="275" Click="button_Click_1"/>
         <Button x:Name="BtnExportBlueprint" Content="Export Blueprint" HorizontalAlignment="Left" Margin="9,288,0,0" VerticalAlignment="Top" Width="276" Click="button_Click_export"/>
+        <Menu x:Name="menu" HorizontalAlignment="Left" Height="28" VerticalAlignment="Top" Width="299">
+            <MenuItem Header="Load Custom Paint" Height="28" Width="113" Click="MenuItem_Click"/>
+
+        </Menu>
     </Grid>
 </Window>

@@ -5,10 +5,13 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Windows;
-using System.Windows.Input;
+using System.Windows.Forms;
 using System.Windows.Media;
-using Microsoft.Win32;
+using System.Xml;
 using Xceed.Wpf.Toolkit;
+using MessageBox = System.Windows.MessageBox;
+using OpenFileDialog = Microsoft.Win32.OpenFileDialog;
+using SaveFileDialog = Microsoft.Win32.SaveFileDialog;
 
 namespace EvoEditApp
 {
@@ -18,8 +21,9 @@ namespace EvoEditApp
     public partial class PaintWindow : Window
     {
         private ObservableCollection<ColorSwap> MyListBoxData = new ObservableCollection<ColorSwap>();
+
         //Default StevoPaints
-        private static ObservableCollection<ColorItem> Skywanderers = new ObservableCollection<ColorItem>()
+        private  ObservableCollection<ColorItem> Skywanderers = new ObservableCollection<ColorItem>()
             {
                 new ColorItem(Color.FromArgb(255, 204, 71, 71), ""),
                 new ColorItem(
@@ -272,25 +276,23 @@ namespace EvoEditApp
                     ), "")
             };
 
-
-
         public PaintWindow()
         {
             InitializeComponent();
-         
+
             ColorBox.ItemsSource = MyListBoxData;
         }
 
         public class ColorSwap
         {
             //Set observable collection of colorItems
-            public  ObservableCollection<ColorItem> AllColors
+            public ObservableCollection<ColorItem> AllColors
             {
                 get;
                 set;
             }
 
-            public ColorSwap(Color old,ObservableCollection<ColorItem> norm)
+            public ColorSwap(Color old, ObservableCollection<ColorItem> norm, ObservableCollection<ColorItem> Skywanderers)
             {
                 ColorOld = old;
                 ColorNew = old;
@@ -315,19 +317,17 @@ namespace EvoEditApp
                 set;
             }
 
-            
             public ObservableCollection<ColorItem> NonstandardColors
             {
                 get;
                 set;
             }
-
         }
-
 
         private string currentfile;
 
         public BrickEntityMp old;
+
         //Open a Stevo Blueprint
         private void button_Click_1(object sender, RoutedEventArgs e)
         {
@@ -365,7 +365,7 @@ namespace EvoEditApp
                         }
                         else
                         {
-                            ColorCount.Add(c,1);
+                            ColorCount.Add(c, 1);
                         }
                     }
 
@@ -384,15 +384,15 @@ namespace EvoEditApp
                     ObservableCollection<ColorItem> shipColors = new ObservableCollection<ColorItem>();
                     foreach (var pair in ColorCount)
                     {
-                        shipColors.Add(new ColorItem(pair.Key.C(),""));
+                        shipColors.Add(new ColorItem(pair.Key.C(), ""));
                     }
 
                     var val = from ele in ColorCount
-                        orderby ele.Value descending 
-                        select ele;
+                              orderby ele.Value descending
+                              select ele;
                     foreach (var ele in val)
                     {
-                        MyListBoxData.Add(new ColorSwap(ele.Key.C(), shipColors));
+                        MyListBoxData.Add(new ColorSwap(ele.Key.C(), shipColors,Skywanderers));
                     }
                 }
             }
@@ -406,11 +406,11 @@ namespace EvoEditApp
 
             public sevocol(Color color)
             {
-               
                 r = (byte)color.R;
                 g = (byte)color.G;
                 b = (byte)color.B;
             }
+
             public sevocol(object color)
             {
                 var c = (object[])color;
@@ -420,7 +420,6 @@ namespace EvoEditApp
                 var a = (byte)c[3];
                 //Console.WriteLine(a);
             }
-          
 
             public object sevoC()
             {
@@ -431,8 +430,8 @@ namespace EvoEditApp
             {
                 return Color.FromRgb(r, g, b);
             }
-
         }
+
         internal static ushort range_to_scale(int x, int y, int z)
         {
             var u = (ushort)z;
@@ -440,33 +439,10 @@ namespace EvoEditApp
             u = (ushort)(u << (ushort)4 | (ushort)x);
             return u;
         }
-
-        private void finddiff(BrickEntityMp x, BrickEntityMp y)
-        {
-            
-            int child = 0;
-            int brick = 0;
-            List<List<int>> instance = new List<List<int>>();
-            foreach (BrickDatasSave b in x.BrickDatasChildrens)
-            {
-                var yb = y.BrickDatasChildrens[child];
-                int id = 0;
-                while (id < b.Length)
-                {
-                    if (yb.Datas[id] != b.Datas[id])
-                    {
-                        Console.WriteLine($"{child},{id}");
-                    }
-
-                    id++;
-                }
-                child++;
-            }
-        }
+        
 
         private void button_Click_export(object sender, RoutedEventArgs e)
         {
-
             if (!new FileInfo(currentfile).Exists)
             {
                 throw new Exception("missing base blueprint template");
@@ -485,10 +461,8 @@ namespace EvoEditApp
                 Dictionary<sevocol, sevocol> remap = MyListBoxData.Where(cswap => cswap.diff()).ToDictionary(cswap => new sevocol(cswap.ColorOld), cswap => new sevocol(cswap.ColorNew));
                 int sc = 1;
 
-                
+                List<int> touch = new List<int>() { 84, 78, 85, 3, 255, 181 };
 
-                List<int> touch = new List<int>() { 84,78, 85, 3, 255, 181 };
-              
                 for (int i = 0; i < x.BrickDatasChildrens.Count; i++)
                 {
                     if (x.BrickDatasChildrens[i].Datas != null)
@@ -506,11 +480,11 @@ namespace EvoEditApp
                         }
                     }
                 }
-                
+
                 //x.BrickDatasChildrens[12].Datas[63].scale = range_to_scale(2, 0, 5);
                 //x.BrickDatasChildrens[1].Datas[1].gridPosition = new Vector3i(0, 2, 0);
                 //x.BrickDatasChildrens[2].Datas[1].gridPosition = new Vector3i(0, 2, 0);
-             
+
                 int count = 0;
                 int check = 0;
                 for (int i = 0; i < x.BrickDatas.Datas.Length; i++)
@@ -524,68 +498,61 @@ namespace EvoEditApp
                         {
                             x.BrickDatas.Datas[i].color = remap[c].sevoC();
                         }
-                      //  x.BrickDatas.Datas[i].scale = range_to_scale(1, 0, 1);
+                        //  x.BrickDatas.Datas[i].scale = range_to_scale(1, 0, 1);
                     }
                 }
-                           // if (x.BrickDatas.Datas[i].brickId == 3)
-                         //   {
-                           //     x.BrickDatas.Datas[i].brickId = 78;
-                         //   }
-                        //if (x.BrickDatas.Datas[i].brickId == 84)
-                        // {
-                        // x.BrickDatas.Datas[i].gridPosition.X += 12;
-                        // x.BrickDatas.Datas[i].scale = range_to_scale(0, 7, 0);
-                        //x.BrickDatas.Datas[i].gridPosition.X -= 18;
-                        // }
-                        //if (x.BrickDatas.Datas[i].brickId == 80)
-                        //{
-                        // x.BrickDatas.Datas[i].scale = range_to_scale(0, 7, 0);
-                        //  //x.BrickDatas.Datas[i].gridPosition.X -= 18;
-                        //  }
+                // if (x.BrickDatas.Datas[i].brickId == 3)
+                //   {
+                //     x.BrickDatas.Datas[i].brickId = 78;
+                //   }
+                //if (x.BrickDatas.Datas[i].brickId == 84)
+                // {
+                // x.BrickDatas.Datas[i].gridPosition.X += 12;
+                // x.BrickDatas.Datas[i].scale = range_to_scale(0, 7, 0);
+                //x.BrickDatas.Datas[i].gridPosition.X -= 18;
+                // }
+                //if (x.BrickDatas.Datas[i].brickId == 80)
+                //{
+                // x.BrickDatas.Datas[i].scale = range_to_scale(0, 7, 0);
+                //  //x.BrickDatas.Datas[i].gridPosition.X -= 18;
+                //  }
 
-                        //x.BrickDatas.Datas[i].gridPosition = new Vector3i(x.BrickDatas.Datas[i].gridPosition.X,
-                        // (x.BrickDatas.Datas[i].gridPosition.Y / (4 * (int)Math.Pow(2, x.BrickDatas.Datas[i].gridSize))) * 4 * (int)Math.Pow(2, sc), x.BrickDatas.Datas[i].gridPosition.Z);
-                        //x.BrickDatas.Datas[i].gridPosition += new Vector3i(4, 0, 4);
-                        /*
-                          if (x.BrickDatas.Datas[i].brickId == 3)
-                          {
-                            if(check == 1)
-                            {
-                                x.BrickDatas.Datas[i] = x.BrickDatas.Datas[0];
-                            }
-                            else
-                            {
-                                
-                                x.BrickDatas.Datas[i].scale = range_to_scale(0, 7, 0);
-                            }
-                            check = 1;
-                            //x.BrickDatas.Datas[i].scale = 240;
-                            //x.BrickDatas.Datas[i].gridPosition -= 3*x.BrickDatas.Datas[i].gridPosition;
+                //x.BrickDatas.Datas[i].gridPosition = new Vector3i(x.BrickDatas.Datas[i].gridPosition.X,
+                // (x.BrickDatas.Datas[i].gridPosition.Y / (4 * (int)Math.Pow(2, x.BrickDatas.Datas[i].gridSize))) * 4 * (int)Math.Pow(2, sc), x.BrickDatas.Datas[i].gridPosition.Z);
+                //x.BrickDatas.Datas[i].gridPosition += new Vector3i(4, 0, 4);
+                /*
+                  if (x.BrickDatas.Datas[i].brickId == 3)
+                  {
+                    if(check == 1)
+                    {
+                        x.BrickDatas.Datas[i] = x.BrickDatas.Datas[0];
+                    }
+                    else
+                    {
+                        x.BrickDatas.Datas[i].scale = range_to_scale(0, 7, 0);
+                    }
+                    check = 1;
+                    //x.BrickDatas.Datas[i].scale = 240;
+                    //x.BrickDatas.Datas[i].gridPosition -= 3*x.BrickDatas.Datas[i].gridPosition;
+                  }
+                */
+                //x.BrickDatas.Datas[i].brickId = 85;
+                //x.BrickDatas.Datas[i].gridSize = (byte)sc;
 
-                          }
-                        */
-                        //x.BrickDatas.Datas[i].brickId = 85;
-                        //x.BrickDatas.Datas[i].gridSize = (byte)sc;
-                   
-                      
-                        //count++;
-                        
+                //count++;
 
-                    /* { 0, new Vector3i(2, 0, 2) },
-                    { 1, new Vector3i(4, 0, 4) },
-                    { 2, new Vector3i(8, 0, 8) },
-                    { 3, new Vector3i(0, 16, 0) },//1m
-                    { 4, new Vector3i(16, -16, 16) },//2m //8 = 0.375m
-                    { 5, new Vector3i(48, -16, 48) },//4m
-                    { 6, new Vector3i(112,-16, 112) },//8m
-                    { 7, new Vector3i(240, -16, 240) },//16m
-                    { 8, new Vector3i(496, -16, 496) } //32m*/
-
-
-                
+                /* { 0, new Vector3i(2, 0, 2) },
+                { 1, new Vector3i(4, 0, 4) },
+                { 2, new Vector3i(8, 0, 8) },
+                { 3, new Vector3i(0, 16, 0) },//1m
+                { 4, new Vector3i(16, -16, 16) },//2m //8 = 0.375m
+                { 5, new Vector3i(48, -16, 48) },//4m
+                { 6, new Vector3i(112,-16, 112) },//8m
+                { 7, new Vector3i(240, -16, 240) },//16m
+                { 8, new Vector3i(496, -16, 496) } //32m*/
 
                 ParentEntity parent = new ParentEntity(x);
-                
+
                 BrickDatasSave b = new BrickDatasSave()
                 {
                     AdditionalDatas = x.BrickDatas.AdditionalDatas,
@@ -597,10 +564,50 @@ namespace EvoEditApp
                 SaveFileDialog saveFileDialog = new SaveFileDialog();
                 saveFileDialog.Filter = "Blueprint (*.sevo)|*.sevo";
                 if (saveFileDialog.ShowDialog() == true)
-                    parent.SaveToDiskAtPathChild(saveFileDialog.FileName, false,x.BrickDatasChildrens);
-                   // parent.SaveToDiskAtPath(saveFileDialog.FileName, false);
+                    parent.SaveToDiskAtPathChild(saveFileDialog.FileName, false, x.BrickDatasChildrens);
             }
         }
-        }}
 
+        private void MenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                OpenFileDialog o = new OpenFileDialog()
+                {
+                    Filter = "xml files (*.xml)|*.xml",
+                };
+                bool? result = o.ShowDialog();
+                if (result == true)
+                {
+                    //Get the path of specified file
+                    var filePath = o.FileName;
 
+                    //Read the contents of the file into a stream
+                    var fileStream = o.OpenFile();
+                    XmlDocument doc = new XmlDocument();
+                    doc.Load(o.FileName);
+                    XmlNodeList elemList = doc.GetElementsByTagName("Color32");
+
+                    Skywanderers.Clear();
+
+                    foreach (XmlNode el in elemList)
+                    {
+                        if (!el.HasChildNodes) continue;
+                        int.TryParse(el.ChildNodes.Item(0).InnerText, out int x);
+                        byte r = Convert.ToByte(x);
+                        int.TryParse(el.ChildNodes.Item(1).InnerText, out x);
+                        byte g = Convert.ToByte(x);
+                        int.TryParse(el.ChildNodes.Item(2).InnerText, out x);
+                        byte b = Convert.ToByte(x);
+                        Skywanderers.Add(new ColorItem(Color.FromArgb(255,r,g,b), ""));
+                    }
+                }
+            }
+            catch (Exception er)
+            {
+                MessageBox.Show($"Unable to Import: {er.Message}", "Paint Import error", MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+    }
+}
