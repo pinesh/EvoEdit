@@ -148,14 +148,13 @@
         <GroupBox x:Name="groupBox_Copy" Header="Settings" HorizontalAlignment="Left" Height="185" Margin="343,23,0,0" VerticalAlignment="Top" Width="160">
             <Grid>
                 <StackPanel Orientation="Vertical" Margin="0,0,0,10">
-                    <CheckBox x:Name="checkBox_Optimize" Content="Use Fast Optimize" HorizontalAlignment="Left" Height="26" VerticalAlignment="Top" Width="124" IsChecked="True"/>
                     <CheckBox x:Name="checkBox_Paint" Content="Ignore Paint" HorizontalAlignment="Left" Height="26"  VerticalAlignment="Top" Width="108" IsChecked="False" Unchecked="checkBox_Paint_Checked" Checked="checkBox_Paint_Checked"/>
                     <CheckBox x:Name="checkBox_Paint_Copy" Content="Ignore Slabs" HorizontalAlignment="Left" Height="26" VerticalAlignment="Top" Width="108" IsChecked="False" Checked="checkBox_Slab_Checked" Unchecked="checkBox_Slab_Checked"/>
                     <Label x:Name="label2" Content="Translation Ratio:" HorizontalAlignment="Left" VerticalAlignment="Top"/>
-                    <CheckBox x:Name="checkBox_Sym_Test" Content="Axis Symmetry" HorizontalAlignment="Left" Height="26" VerticalAlignment="Top" Width="108" IsChecked="True" Checked="checkBox_Slab_Checked" Unchecked="checkBox_Axis_Checked"/>
+                    <Label x:Name="Axislabel" Content="Axis Symmetry:" HorizontalAlignment="Left" Height="26" VerticalAlignment="Top" Width="108"/>
                 </StackPanel>
 
-                <ComboBox x:Name="cmbox_ratio" HorizontalAlignment="Left" Margin="100,81,0,0" VerticalAlignment="Top" Width="48" IsEditable="False"  
+                <ComboBox x:Name="cmbox_ratio" HorizontalAlignment="Left" Margin="100,55,0,0" VerticalAlignment="Top" Width="48" IsEditable="False"  
                           IsReadOnly ="True" Text="Set Scale" SelectionChanged="comboBox_SelectionChanged">
                     <ComboBoxItem>1/8m</ComboBoxItem>
                     <ComboBoxItem>1/4m</ComboBoxItem>
@@ -167,10 +166,12 @@
                     <ComboBoxItem>16m</ComboBoxItem>
                     <ComboBoxItem>32m</ComboBoxItem>
                 </ComboBox>
-                <ComboBox x:Name="cmbox_axis" HorizontalAlignment="Left" Margin="100,103,0,0" VerticalAlignment="Top" Width="48" IsEditable="False"  
+                <ComboBox x:Name="cmbox_axis" HorizontalAlignment="Left" Margin="100,82,0,0" VerticalAlignment="Top" Width="48" IsEditable="False"  
                     IsReadOnly ="True"  SelectionChanged="comboBox_Axis_SelectionChanged">
                     <ComboBoxItem IsSelected="True" Content="x"/>
-                    
+                    <ComboBoxItem Content="y"/>
+                    <ComboBoxItem Content="z"/>
+                    <ComboBoxItem Content="none"/>
                 </ComboBox>
             </Grid>
 

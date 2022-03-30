@@ -69,7 +69,6 @@ namespace EvoEditApp
                         e.Handled = true;
                         e.CanExecute = (root.IsChecked != false);
                     }));
-
             // this.tree.Focus();
         }
 
@@ -323,7 +322,7 @@ namespace EvoEditApp
                     worker.DoWork += worker_write;
                     worker.ProgressChanged += worker_ProgressChanged;
                     worker.RunWorkerCompleted += worker_RunWorkerCompleted;
-                    worker.RunWorkerAsync(new Tuple<List<LoadInstance>, bool,bool,int>(_loadedInstances, checkBox_Optimize.IsChecked.Value,checkBox_Sym_Test.IsChecked.Value,_axis));
+                    worker.RunWorkerAsync(new Tuple<List<LoadInstance>, bool,int>(_loadedInstances, true,_axis));
                     break;
             }
         }
@@ -335,13 +334,13 @@ namespace EvoEditApp
         void worker_write(object sender, DoWorkEventArgs e)
         {
             int i = 1;
-           ((Tuple<List<LoadInstance>, bool,bool,int>)e.Argument).Deconstruct(out List<LoadInstance> ls, out bool fast,out bool sym,out int axis);
+           ((Tuple<List<LoadInstance>, bool,int>)e.Argument).Deconstruct(out List<LoadInstance> ls, out bool fast,out int axis);
             try
             {
                 foreach (var l in ls)
                 {
                     UpdateProgress(0, $"Initializing: {i}/{ls.Count}");
-                    Voxel_Import Vi = new Voxel_Import(l.blocks, l.min, _scale, IgnorePaint, l.capturescale,fast,sym);
+                    Voxel_Import Vi = new Voxel_Import(l.blocks, l.min, _scale, IgnorePaint, l.capturescale,fast);
                     Vi.PropertyChanged += (s, ev) =>
                     {
                         (sender as BackgroundWorker).ReportProgress(int.Parse(ev.PropertyName.ToString()));
@@ -372,13 +371,12 @@ namespace EvoEditApp
             if((int)e.Result == 1)
                 MessageBox.Show("Done Writing, Check your output!: ");
             Unblocker();
-            if (checkBox_Optimize.IsChecked.Value)
-            {
-                btn_import.IsEnabled = false;
-                LoadedFile.Text = "No Files Loaded";
-                LoadedFile.Foreground = Brushes.Red;
-                _loadedInstances = new List<LoadInstance>();
-            }
+          
+            btn_import.IsEnabled = false;
+            LoadedFile.Text = "No Files Loaded";
+            LoadedFile.Foreground = Brushes.Red;
+            _loadedInstances = new List<LoadInstance>();
+           
          
            
             UpdateProgress(0, $"");
@@ -494,13 +492,11 @@ namespace EvoEditApp
             btn_readSM.IsEnabled = false;
             btn_readObj.IsEnabled = false;
             btn_import.IsEnabled = false;
-            checkBox_Optimize.IsEnabled = false;
             checkBox_Paint.IsEnabled = false;
             cmbox_ratio.IsEnabled = false;
             groupBox.IsEnabled = false;
             checkBox_Paint_Copy.IsEnabled = false;
             slider.IsEnabled = false;
-            checkBox_Sym_Test.IsEnabled = false;
         }
 
         private void Unblocker()
@@ -509,7 +505,6 @@ namespace EvoEditApp
             FileHeader.IsEnabled = true;
             ConfigureHeader.IsEnabled = true;
             btn_import.IsEnabled = true;
-            checkBox_Optimize.IsEnabled = true;
             checkBox_Paint.IsEnabled = true;
             cmbox_ratio.IsEnabled = true;
             groupBox.IsEnabled = true;
@@ -518,7 +513,6 @@ namespace EvoEditApp
             if(lbl_objfile.Content.ToString().Length != 0)
                 btn_readObj.IsEnabled = true;
             checkBox_Paint_Copy.IsEnabled = true;
-            checkBox_Sym_Test.IsEnabled = true;
             slider.IsEnabled = true;
         }
 
@@ -668,7 +662,7 @@ namespace EvoEditApp
 
         private void readvl32(object sender, DoWorkEventArgs e)
         {
-            ((Tuple<string,string>)e.Argument).Deconstruct(out string p_out,out string n);
+            ((Tuple<string,string,int>)e.Argument).Deconstruct(out string p_out,out string n,out int axis);
             try
             {
               
@@ -692,14 +686,35 @@ namespace EvoEditApp
                             _ = b.ReadByte();
 
                             var v = new Vector3i(x, y, z);
+                            v.Rotate(axis);
                             double d = ((float)count / (float)b.BaseStream.Length) * 100;
                             if (d > m)
                             { (sender as BackgroundWorker).ReportProgress(m); m++;
                             }
-
+                            if(test.ContainsKey(v))
+                            {
+                                Console.WriteLine(v.ToString());
+                            }
+                            else
+                            {
+                                switch (axis)
+                                {
+                                    case 0:
+                                        test.Add(v, new BlockBit(260101, 3));
+                                        break;
+                                    case 1:
+                                        test.Add(v, new BlockBit(260101, 4));
+                                        break;
+                                    case 2:
+                                        test.Add(v, new BlockBit(260101, 0));
+                                        break;
+                                    case 3:
+                                        test.Add(v, new BlockBit(260101, 0));
+                                        break;
+                                }
+                             
+                            }
                             //BlobCache.InMemory.InsertObject(v.ToString(), new BlockBit(260101, 3));
-                            test.Add(v, new BlockBit(260101, 3));
-                            
                             count += 16;
                         }
                         e.Result = new LoadInstance()
@@ -864,7 +879,7 @@ namespace EvoEditApp
                 worker.DoWork += readvl32;
                 worker.ProgressChanged += worker_ProgressChanged;
                 worker.RunWorkerCompleted += worker_RunParseWorkerCompleted;
-                worker.RunWorkerAsync(new Tuple<string,string>(path,outputname));
+                worker.RunWorkerAsync(new Tuple<string,string,int>(path,outputname, _axis));
             }
             catch(Exception er)
             {
@@ -922,12 +937,6 @@ namespace EvoEditApp
         {
             var cm = (ComboBox)sender;
             _axis = cm.Items.IndexOf(cm.SelectedItem);
-        }
-
-        public bool UseAxis = false;
-        private void checkBox_Axis_Checked(object sender, RoutedEventArgs e)
-        {
-            UseAxis = !UseAxis;
         }
     }
     

@@ -119,7 +119,7 @@ namespace EvoEditApp
         public Voxel_Import(Dictionary<Vector3i, BlockBit> l, Vector3i u, int s = 1, bool paint = false,int capS =1,bool fast = true,bool ax = false)
         {
             //_ok = new SortedDictionary<Vector3i, BlockBit>(new Vector3IComparer());
-            this.fast = fast;
+            this.fast = true;
             Master = l;
             if (!fast)
                 MasterDif = new Dictionary<Vector3i, byte>(Master.Count * 10);
@@ -140,7 +140,7 @@ namespace EvoEditApp
         public void Optimize(int axis = 0)
         {
             Mblist = new List<MasterBlock>();
-            if(_axis)
+            if(axis != 3)
                 this.MergeWithSym(axis);
             else
                 this.Merge();
@@ -151,16 +151,43 @@ namespace EvoEditApp
         /// <summary>
         /// Experimental, we want to determine the block width of our data, this might be tricky.
         /// </summary>
-        internal void MergeWithSym(int axis)
+        internal void MergeWithSym(int a)
         {
-            int minAxis;
-            int maxAxis = minAxis = Min[axis];
-
+            //a = 0;
+            //when we need to rotate along y axis, we need to move along x.
+            int? minAxis = null;
+            int? maxAxis = null;
+            /*switch (a)
+            {
+                //if y, we divide best on x
+                case 0:
+                    a = 1;
+                    break;
+                case 1:
+                    a = 0;
+                    break;
+                case 2:
+                    a = 2;
+                    break;
+            }*/
             var _orderedKeys = new SortedDictionary<Vector3i, BlockBit>(new VoxelCorrections.Vector3IComparer());
             foreach (var keyPair in Master)
             {
-                if (keyPair.Key[axis] > maxAxis)
-                    maxAxis = keyPair.Key[axis];
+                if (!minAxis.HasValue)
+                {
+                    minAxis = keyPair.Key[a];
+                }
+
+                if (!maxAxis.HasValue)
+                {
+                    maxAxis = keyPair.Key[a];
+                }
+
+                if (keyPair.Key[a] > maxAxis)
+                    maxAxis = keyPair.Key[a];
+                if (keyPair.Key[a] < minAxis)
+                    minAxis = keyPair.Key[a];
+
                 _orderedKeys.Add(keyPair.Key, keyPair.Value);
             }
             int og = _orderedKeys.Count;
@@ -170,7 +197,7 @@ namespace EvoEditApp
             //if odd brick, we need to break into 3 parts.
           
             //we break into two parts, all keys on each side of the median.
-            median = minAxis + (double)(maxAxis - minAxis) / 2;
+            median = (double)(minAxis + (double)(maxAxis - minAxis) / 2);
 
             //_ordered keys contains all keys at this point, we want to split with less than greater than median.
 
@@ -181,13 +208,13 @@ namespace EvoEditApp
             var middle = new SortedDictionary<Vector3i, BlockBit>(new VoxelCorrections.Vector3IComparer());
             foreach (var keyPair in _orderedKeys)
             {
-               if (keyPair.Key[axis] > median && keyPair.Value.GetSevoId() == 196)
+               if (keyPair.Key[a] > median && keyPair.Value.GetSevoId() == 196)
                {
                 //   var orderedKey = _orderedKeys[keyPair.Key];
                  //  orderedKey.invert = true;
                    major.Add(keyPair.Key, keyPair.Value);
                }
-               else if (keyPair.Key[axis] < median)
+               else if (keyPair.Key[a] < median)
                {
                    minor.Add(keyPair.Key, keyPair.Value);
                }
@@ -197,7 +224,7 @@ namespace EvoEditApp
                }
             }
 
-            int cur = 0;
+             int cur = 0;
             int i = 0;
             //merge the middle.
            foreach (var key in middle.Keys.ToList())
@@ -241,37 +268,20 @@ namespace EvoEditApp
                }
 
                if (!Master.ContainsKey(keyPair.Key)) continue;
-               findOneInvert(keyPair.Key, axis, keyPair.Value);
+               findOneInvert(keyPair.Key, 0, keyPair.Value);
            }
         }
         internal void Merge()
         {
             _ok = new SortedDictionary<Vector3i, BlockBit>(new VoxelCorrections.Vector3IComparer());
-            /*
-            List<Tuple<Vector3i,Vector3i>> updateKeys = new List<Tuple<Vector3i, Vector3i>>();
             foreach (var keyPair in Master)
             {
-                if (keyPair.Value.GetSevoId() == 197)
-                {
-                    Vector3i vec = stretchTriangles(keyPair.Key, keyPair.Value);
-                    if(vec != new Vector3i(0,0,0))
-                        updateKeys.Add(new Tuple<Vector3i, Vector3i>(keyPair.Key,vec));
-                }
                 _ok.Add(keyPair.Key, keyPair.Value);
             }
-            foreach (var keyPair in updateKeys)
-            {
-                var b = Master[keyPair.Item1];
-                b.wedgeFactor = keyPair.Item2;
-                Master[keyPair.Item1] = b;
-            }
-            */
-
             int og = _ok.Count;
             var cur = 0;
             int i = 0;
-            if (fast)
-            {
+          
                 foreach (var key in _ok.Keys.ToList())
                 {
                     cur += 1;
@@ -286,25 +296,7 @@ namespace EvoEditApp
                     findOne(key);
                 }
                 NotifyPropertyChanged($"{100}");
-            }
-            else
-            {
-                foreach (var key in _ok.Keys.ToList())
-                {
-                    cur += 1;
-
-                    double m = (float)(MasterDif.Count / (float)og) * (float)100;
-                    if (m > i)
-                    {
-                        i++;
-                        NotifyPropertyChanged($"{i}");
-                    }
-                    if (MasterDif.ContainsKey(key)) continue;
-                    findOne(key);
-                }
-                NotifyPropertyChanged($"{100}");
-            }
-           
+            
         }
 
 
@@ -344,9 +336,6 @@ namespace EvoEditApp
         {//whatever axis is, is the way we wish to traverse
             var points = new List<Vector3i>();
 
-            switch (axis)
-            {
-                case 0://x axis
                     for (var yIndex = start.Y; yIndex <= end.Y; yIndex++)
                     {
                         //z
@@ -361,40 +350,7 @@ namespace EvoEditApp
                             }
                         }
                     }
-                    break;
-                case 1://y axis
-                    for (var yIndex = start.Y; yIndex >= end.Y; yIndex--)
-                    {
-                        //z
-                        for (var zIndex = start.Z; zIndex <= end.Z; zIndex++)
-                        {
-                            //x
-                            for (var xIndex = start.X; xIndex <= end.X; xIndex++)
-                            {
-                                var v = new Vector3i(xIndex, yIndex, zIndex);
-                                if (!Comp(v, type, r,wedge)) return points;
-                                points.Add(v);
-                            }
-                        }
-                    }
-                    break;
-                default://z axis
-                    for (var yIndex = start.Y; yIndex <= end.Y; yIndex++)
-                    {
-                        //z
-                        for (var zIndex = start.Z; zIndex >= end.Z; zIndex--)
-                        {
-                            //x
-                            for (var xIndex = start.X; xIndex <= end.X; xIndex++)
-                            {
-                                var v = new Vector3i(xIndex, yIndex, zIndex);
-                                if (!Comp(v, type, r,wedge)) return points;
-                                points.Add(v);
-                            }
-                        }
-                    }
-                    break;
-            }
+                
             return points;
         }
 
@@ -440,18 +396,7 @@ namespace EvoEditApp
             while (c < 16)
             {
                 List<Vector3i> lv;
-                switch (axis)
-                {
-                    case 0:
-                         lv = GetAllPointsInverted(new Vector3i(start.X - (c * dirX), start.Y + (c * dirY), start.Z + (c * dirZ)), new Vector3i(end.X - (c * dirX), end.Y + (c * dirY), end.Z + (c * dirZ)), type, r: r, axis: axis, wedge);
-                        break;
-                    case 1:
-                         lv = GetAllPointsInverted(new Vector3i(start.X + (c * dirX), start.Y - (c * dirY), start.Z + (c * dirZ)), new Vector3i(end.X + (c * dirX), end.Y - (c * dirY), end.Z + (c * dirZ)), type, r: r, axis: axis, wedge);
-                        break;
-                    default:
-                         lv = GetAllPointsInverted(new Vector3i(start.X + (c * dirX), start.Y + (c * dirY), start.Z - (c * dirZ)), new Vector3i(end.X + (c * dirX), end.Y + (c * dirY), end.Z - (c * dirZ)), type, r: r, axis: axis, wedge);
-                        break;
-                }
+                lv = GetAllPointsInverted(new Vector3i(start.X - (c * dirX), start.Y + (c * dirY), start.Z + (c * dirZ)), new Vector3i(end.X - (c * dirX), end.Y + (c * dirY), end.Z + (c * dirZ)), type, r: r, axis: axis, wedge);
                 if (mastlist.Count + lv.Count == (c + 1) * m)
                 {
                     mastlist.AddRange(lv);
@@ -581,29 +526,13 @@ namespace EvoEditApp
             //we have wedges done.
             //will affect blocks
             int zcount = 0;
-            if (axis == 0 )
-            {
-                IterateStretchInvert(1, start, new Vector3i(start.X - (xcount), start.Y, start.Z), mastlist, type, r, axis: axis, m: (xcount + 1),wedge: b.wedgeFactor, dirZ: 1).Deconstruct(out mastlist, out  zcount);
-            }
-            else
-            {
-                IterateStretchInvert(1, start, new Vector3i(start.X + (xcount), start.Y, start.Z), mastlist, type, r, axis: axis, m: (xcount + 1), wedge: b.wedgeFactor, dirZ: 1).Deconstruct(out mastlist, out  zcount);
-            }
-           
+            IterateStretchInvert(1, start, new Vector3i(start.X - (xcount), start.Y, start.Z), mastlist, type, r, axis: axis, m: (xcount + 1),wedge: b.wedgeFactor, dirZ: 1).Deconstruct(out mastlist, out  zcount);
+            
             //will affect blocks
             int ycount = 0;
-            switch (axis)
-            {
-                case 0:
-                    IterateStretchInvert(1, start, new Vector3i(start.X - (xcount), start.Y, start.Z + (zcount)), mastlist, type, r, axis: axis, m: (xcount + 1) * (zcount + 1), wedge: b.wedgeFactor, dirY: 1).Deconstruct(out mastlist, out  ycount);
-                    break;
-                case 2:
-                    IterateStretchInvert(1, start, new Vector3i(start.X + (xcount), start.Y, start.Z - (zcount)), mastlist, type, r, axis: axis, m: (xcount + 1) * (zcount + 1), wedge: b.wedgeFactor, dirY: 1).Deconstruct(out mastlist, out  ycount);
-                    break;
-                default:
-                    IterateStretchInvert(1, start, new Vector3i(start.X + (xcount), start.Y, start.Z + (zcount)), mastlist, type, r, axis: axis, m: (xcount + 1) * (zcount + 1), wedge: b.wedgeFactor, dirY: 1).Deconstruct(out mastlist, out  ycount);
-                    break;
-            }
+            
+            IterateStretchInvert(1, start, new Vector3i(start.X - (xcount), start.Y, start.Z + (zcount)), mastlist, type, r, axis: axis, m: (xcount + 1) * (zcount + 1), wedge: b.wedgeFactor, dirY: 1).Deconstruct(out mastlist, out  ycount);
+            
             //  IterateStretchInvert(1, start, new Vector3i(start.X + (xcount), start.Y, start.Z + (zcount)), mastlist, type, r, axis: axis, m: (xcount + 1) * (zcount + 1), dirY: 1).Deconstruct(out mastlist, out int ycount);
             //every point in this list becomes an mblock. 
             SwapBlockINV(mastlist, start, type, r,axis:axis, xcount, ycount, zcount);
@@ -628,18 +557,8 @@ namespace EvoEditApp
         */
         internal void SwapBlockINV(List<Vector3i> mastlist, Vector3i start, int type, byte r,int axis, int offX = 0, int offY = 0, int offZ = 0)
         {
-            switch (axis)
-            {
-                case 0:
-                    Mblist.Add(GetMasterBlock(start, new Vector3i((start.X - offX), (start.Y + (offY)), (start.Z + (offZ))), type, 2));
-                    break;
-                case 1:
-                    Mblist.Add(GetMasterBlock(start, new Vector3i((start.X + offX), (start.Y - (offY)), (start.Z + (offZ))), type, 0));
-                    break;
-                default:
-                    Mblist.Add(GetMasterBlock(start, new Vector3i((start.X + offX), (start.Y + (offY)), (start.Z - (offZ))), type, 4));
-                    break;
-            }
+           
+            Mblist.Add(GetMasterBlock(start, new Vector3i((start.X - offX), (start.Y + (offY)), (start.Z + (offZ))), type, 2));
             //Mblist.Add(GetMasterBlock(start, new Vector3i((start.X + offX), (start.Y + (offY)), (start.Z + (offZ))), type, r));
             foreach (var v in mastlist)
             {

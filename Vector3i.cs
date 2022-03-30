@@ -5,6 +5,7 @@ using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 using MessagePack;
+using Xceed.Wpf.Toolkit.Core.Converters;
 
 namespace EvoEditApp
 {
@@ -260,6 +261,35 @@ namespace EvoEditApp
         public static Vector3i Scale(Vector3i a, int n, int d)
         {
             return new Vector3i((a.X * n) / d, (a.Y * n) / d, (a.Z * n) / d);
+        }
+        public void Rotate(int a)
+        {
+       
+            var axis = new Vector3();
+           switch (a)
+           {
+                case 0://X
+                   // axis = new Vector3(1, 0, 0);
+                   return;
+                    break;
+                case 1://Y
+                    axis = new Vector3(0, 1, 0);
+                    break;
+                case 2://Z
+                    axis = new Vector3(0, 0, 1);
+                    break;
+                default:
+                    return;
+                    throw new Exception("Out of bounds axis");
+           }
+
+           var p = new Quaternion(this.ToVector3(), 0);
+           var q = Quaternion.CreateFromAxisAngle(axis, (float)Math.PI / 2);
+           var result = Quaternion.Multiply(Quaternion.Multiply(q, p), Quaternion.Inverse(q));
+           this.X = (int)Math.Round(result.X);
+           this.Y = (int)Math.Round(result.Y);
+           this.Z = (int)Math.Round(result.Z);
+           // Console.WriteLine(result.ToString());
         }
 
 

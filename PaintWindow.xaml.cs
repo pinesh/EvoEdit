@@ -342,6 +342,7 @@ namespace EvoEditApp
                 using (FileStream fs = File.OpenRead(openFileDlg.FileName))
                 {
                     var x = BrickEntityMp.GetSaveFromFile(fs, true);
+                    /*
                     if (old == null)
                     {
                         old = x;
@@ -350,7 +351,7 @@ namespace EvoEditApp
                     {
                         finddiff(old,x);
                     }
-
+                    */
                     var s = new StringBuilder();
                     // color = (object)new object[] { paint.X, paint.Y, paint.Z, 255 }
                     Dictionary<sevocol, int> ColorCount = new Dictionary<sevocol, int>();
@@ -365,6 +366,18 @@ namespace EvoEditApp
                         else
                         {
                             ColorCount.Add(c,1);
+                        }
+                    }
+
+                    foreach (var c in from child in x.BrickDatasChildrens where child.Datas?.Length > 0 from d in child.Datas select new sevocol(d.color))
+                    {
+                        if (ColorCount.ContainsKey(c))
+                        {
+                            ColorCount[c] += 1;
+                        }
+                        else
+                        {
+                            ColorCount.Add(c, 1);
                         }
                     }
 
@@ -511,7 +524,7 @@ namespace EvoEditApp
                         {
                             x.BrickDatas.Datas[i].color = remap[c].sevoC();
                         }
-                        
+                      //  x.BrickDatas.Datas[i].scale = range_to_scale(1, 0, 1);
                     }
                 }
                            // if (x.BrickDatas.Datas[i].brickId == 3)
@@ -553,7 +566,7 @@ namespace EvoEditApp
                         */
                         //x.BrickDatas.Datas[i].brickId = 85;
                         //x.BrickDatas.Datas[i].gridSize = (byte)sc;
-                        //x.BrickDatas.Datas[i].scale = range_to_scale(1,0, 1);
+                   
                       
                         //count++;
                         
