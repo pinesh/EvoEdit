@@ -334,7 +334,9 @@ namespace EvoEditApp
         void worker_write(object sender, DoWorkEventArgs e)
         {
             int i = 1;
+          
            ((Tuple<List<LoadInstance>, bool,int>)e.Argument).Deconstruct(out List<LoadInstance> ls, out bool fast,out int axis);
+           Console.WriteLine(ls[0].blocks.Count);
             try
             {
                 foreach (var l in ls)
@@ -634,9 +636,12 @@ namespace EvoEditApp
 
                 var temp = "\""+ Path.Combine(Path.GetDirectoryName(strExeFilePath), "obj2voxel-v1.3.4.exe")+"\"";
                // MessageBox.Show($@"running {temp} {name} {p_out} -r {voxelres}");
+                
+                string arguments = $"\"{name}\" \"{p_out}\" -r {voxelres}";
+                Console.WriteLine(arguments);
                 Process pr = Process.Start(new ProcessStartInfo(temp)
                 {
-                    Arguments = $"\"{ name}\" \"{p_out}\" -r {voxelres}",
+                    Arguments = arguments,
                     WindowStyle = ProcessWindowStyle.Normal,
                     CreateNoWindow = true,
                     UseShellExecute = false,
@@ -674,6 +679,7 @@ namespace EvoEditApp
                     {
                         int count = 0;
                         int m = 0;
+                        Console.WriteLine(b.BaseStream.Length);
                         Dictionary<Vector3i, BlockBit> test = new Dictionary<Vector3i, BlockBit>((int)b.BaseStream.Length/16);
                         while (b.BaseStream.Position <= b.BaseStream.Length - 16)
                         {
@@ -717,6 +723,8 @@ namespace EvoEditApp
                             //BlobCache.InMemory.InsertObject(v.ToString(), new BlockBit(260101, 3));
                             count += 16;
                         }
+                        Console.WriteLine(test.Count);
+
                         e.Result = new LoadInstance()
                         {
                             blocks = test,
@@ -734,6 +742,7 @@ namespace EvoEditApp
                     MessageBoxImage.Error);
                 e.Result = new LoadInstance();
             }
+
         }
 
         private async Task<List<LoadInstance>> ReadBlueprints()
@@ -855,7 +864,7 @@ namespace EvoEditApp
                 Blocker();
                 Mouse.OverrideCursor = System.Windows.Input.Cursors.Wait;
 
-                if(Path.GetExtension(path) == ".stl")
+                if(Path.GetExtension(path) == ".stl"|| Path.GetExtension(path) == ".STL")
                 {
                     path = ReadStl(path);
                 }
@@ -920,7 +929,7 @@ namespace EvoEditApp
             }
 
             voxelres = int.Parse(txt_slider.Text);
-            if (voxelres > 1024 || voxelres < 248)
+            if (voxelres > 2048 || voxelres < 248)
                 bounded = true;
             slider.Value = voxelres;
         }
@@ -937,6 +946,13 @@ namespace EvoEditApp
         {
             var cm = (ComboBox)sender;
             _axis = cm.Items.IndexOf(cm.SelectedItem);
+        }
+
+        private void OpenRescaleConfig_click(object sender, RoutedEventArgs e)
+        {
+            var window = new ScaleWindow();
+            window.Owner = this;
+            window.Show();
         }
     }
     

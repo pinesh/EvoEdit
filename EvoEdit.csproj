@@ -158,6 +158,9 @@
     <Compile Include="BlockTypes.cs" />
     <Compile Include="FooViewModel.cs" />
     <Compile Include="save.cs" />
+    <Compile Include="ScaleWindow.xaml.cs">
+      <DependentUpon>ScaleWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="SMD2.cs" />
     <Compile Include="SM_Load.cs" />
     <Compile Include="Vector3i.cs" />
@@ -182,6 +185,10 @@
       <SubType>Code</SubType>
     </Compile>
     <Page Include="PaintWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="ScaleWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

@@ -1,0 +1,24 @@
+﻿<Window x:Class="EvoEditApp.ScaleWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:EvoEditApp"
+        mc:Ignorable="d"
+        Title="ScaleWindow" Height="286" Width="288">
+    <Grid HorizontalAlignment="Center" Width="288" Height="241" VerticalAlignment="Top">
+        <Slider x:Name="slider" IsSnapToTickEnabled="True" Maximum="8" Minimum="0" Value="3" TickPlacement="BottomRight" ValueChanged="slider_ValueChanged" Margin="0,170,0,0" TickFrequency="1" IsEnabled="True" HorizontalAlignment="Center" Width="268" Height="38" VerticalAlignment="Top"/>
+        <Label x:Name="label" Content="Scale 1:" HorizontalAlignment="Left" Margin="10,144,0,0" VerticalAlignment="Top"/>
+        <Label x:Name="ScalarLabel" Content="1" HorizontalAlignment="Left" Margin="54,144,0,0" VerticalAlignment="Top"/>
+        <GroupBox x:Name="groupBox" HorizontalAlignment="Left" Height="105" Header="Entity Info" Margin="10,34,0,0" VerticalAlignment="Top" Width="265"/>
+        <Label x:Name="label1" Content="Initial Brick Count:" HorizontalAlignment="Left" Margin="22,74,0,0" VerticalAlignment="Top"/>
+        <Label x:Name="label1_Copy" Content="Rescaled Brick Count:" HorizontalAlignment="Left" Margin="22,98,0,0" VerticalAlignment="Top"/>
+        <Label x:Name="LblRescaleCount" Content="0" HorizontalAlignment="Left" Margin="150,98,0,0" VerticalAlignment="Top" Width="111" RenderTransformOrigin="0.192,0.522"/>
+        <Label x:Name="LblOgCount" Content="0" HorizontalAlignment="Left" Margin="150,74,0,0" VerticalAlignment="Top" Width="111" RenderTransformOrigin="0.192,0.522"/>
+        <Button x:Name="BtnChoose" Content="Choose Blueprint" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Click=" button_Click_1" Width="265"/>
+        <Label x:Name="label1_Copy1" Content="Entity:" HorizontalAlignment="Left" Margin="22,53,0,0" VerticalAlignment="Top"/>
+        <Label x:Name="LblEntityName" Content="Not Set" HorizontalAlignment="Left" Margin="150,53,0,0" VerticalAlignment="Top"/>
+        <Button x:Name="BtnExport" Content="Export Blueprint" HorizontalAlignment="Left" Margin="10,213,0,0" VerticalAlignment="Top" Click="button_Click_export" Width="265" IsEnabled="False"/>
+
+    </Grid>
+</Window>

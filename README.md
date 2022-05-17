@@ -1,5 +1,5 @@
 # EvoEdit
-The Starmade - Starship Evo Voxel Converter
+The Starship Evo Voxel Converter
 
 This program is the first Starship Evo blueprint editor and permits the conversion of .sment files from Starmade and obj/stl 3d files to .sevo for use in Starship Evo.
 
@@ -10,6 +10,7 @@ Currently Supports:
 - Permits a flat scale multiplier based on the Starship Evo scales (1-32)
 - Importing of 3d models (obj stl) over a variable resolution. 
 - Repainting an existing sevo blueprint using the color configurator. 
+- Rescaling EXISTING .Sevo Blueprints across the full suite of availible sizes. 
 
 Upcoming updates will bring further porting control, UI improvements and .sevo manipulation. 
 
@@ -21,5 +22,7 @@ How to use (recomended):
 5. Choose an output scale (default 1:1) and press Export[x] Blueprints.
 6. When done, check your output folder and move the new .sevo(s) file to your Starship Evo Blueprints folder (found in \AppData\LocalLow\Moonfire Entertainment\Starship EVO\Save_Data\Blueprints).
 7. Spawn the blueprint as you would a regular blueprint, then save it to ensure it has the correct modeldata. You can then discard the .sevo.
+
+Paint Control and Rescaling can be found under "config".
 
  

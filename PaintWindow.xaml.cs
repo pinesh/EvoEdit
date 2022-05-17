@@ -341,7 +341,7 @@ namespace EvoEditApp
                 currentfile = openFileDlg.FileName;
                 using (FileStream fs = File.OpenRead(openFileDlg.FileName))
                 {
-                    var x = BrickEntityMp.GetSaveFromFile(fs, true);
+                     var x = BrickEntityMp.GetSaveFromFile(fs, true);
                     /*
                     if (old == null)
                     {
@@ -368,6 +368,22 @@ namespace EvoEditApp
                             ColorCount.Add(c, 1);
                         }
                     }
+
+                    for (int i = 0; i < x.BrickDatasChildrens.Count; i++)
+                    {
+                        if (x.BrickDatasChildrens[i].Datas?.Length > 0)
+                        {
+                            foreach (var ind in x.BrickDatasChildrens[i].Datas)
+                            {
+                                if (ind.Material == 2)
+                                {
+                                    Console.WriteLine(i);
+                                    //break;
+                                }
+                            }
+                        }
+                    }
+                    
 
                     foreach (var c in from child in x.BrickDatasChildrens where child.Datas?.Length > 0 from d in child.Datas select new sevocol(d.color))
                     {
@@ -462,6 +478,16 @@ namespace EvoEditApp
                 int sc = 1;
 
                 List<int> touch = new List<int>() { 84, 78, 85, 3, 255, 181 };
+                /*
+
+                for (int i = 0; i < x.BrickDatasChildrens[13].Datas.Length; i++)
+                {
+                    if (touch.Contains(x.BrickDatasChildrens[13].Datas[i].brickId))
+                    {
+                      x.BrickDatasChildrens[13].Datas[i].gridPosition.Z -= 2;
+                    }
+                }*/
+
 
                 for (int i = 0; i < x.BrickDatasChildrens.Count; i++)
                 {
@@ -491,8 +517,17 @@ namespace EvoEditApp
                 {
                     if (x.BrickDatas.Datas[i].brickId != 0)
                     {
-                        //if (touch.Contains(x.BrickDatas.Datas[i].brickId)) {
-                        //x.BrickDatas.Datas[i].gridPosition.X += 32;
+                    
+                        /*
+                        sc = 9;
+                        int constan = 4 * (int)Math.Pow(2, sc);
+                        int norm = 4 * (int)Math.Pow(2, x.BrickDatas.Datas[i].gridSize);
+                        x.BrickDatas.Datas[i].gridPosition = new Vector3i((int)(((double)x.BrickDatas.Datas[i].gridPosition.X/ (double)norm) * constan),
+                            (int)(((double)x.BrickDatas.Datas[i].gridPosition.Y / (double)norm) * constan), (int)(((double)x.BrickDatas.Datas[i].gridPosition.Z / (double)norm) * constan));
+                        x.BrickDatas.Datas[i].gridPosition += new Vector3i(1008, -16, 1008);
+                        x.BrickDatas.Datas[i].gridSize = (byte)sc;*/
+
+
                         var c = new sevocol(x.BrickDatas.Datas[i].color);
                         if (remap.ContainsKey(c))
                         {
@@ -501,6 +536,11 @@ namespace EvoEditApp
                         //  x.BrickDatas.Datas[i].scale = range_to_scale(1, 0, 1);
                     }
                 }
+
+                x.BrickDatas.Datas[2].scale = range_to_scale(0, 7, 0);
+
+                // x.BrickDatas.IdsToRecycle= x.BrickDatas.IdsToRecycle.Append(5);
+
                 // if (x.BrickDatas.Datas[i].brickId == 3)
                 //   {
                 //     x.BrickDatas.Datas[i].brickId = 78;
@@ -549,7 +589,8 @@ namespace EvoEditApp
                 { 5, new Vector3i(48, -16, 48) },//4m
                 { 6, new Vector3i(112,-16, 112) },//8m
                 { 7, new Vector3i(240, -16, 240) },//16m
-                { 8, new Vector3i(496, -16, 496) } //32m*/
+                { 8, new Vector3i(496, -16, 496) } //32m
+                { 9, new Vector3i(1008, -16, 1008) } //64m*/
 
                 ParentEntity parent = new ParentEntity(x);
 

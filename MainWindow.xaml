@@ -60,6 +60,7 @@
                 <MenuItem x:Name ="ConfigureHeader" Header="_Configure" Width="65" >
                     <MenuItem Header="_Colors" Click="OpenColorConfig_click"/>
                     <MenuItem Header="_Block Mapping" Click="Coming_Soon"/>
+                    <MenuItem Header="_Rescale" Click="OpenRescaleConfig_click"/>
                 </MenuItem>
                 <MenuItem Header="_Help" Width="94" >
                     <MenuItem Header="_Guide" Click ="Open_Github_Guide" />
@@ -186,7 +187,7 @@
                 </StackPanel>
                 <StackPanel Orientation="Horizontal">
                     <Label Height="25" Content="Resolution"  HorizontalAlignment="Left"  />
-                    <Slider x:Name="slider" IsSnapToTickEnabled="True" Width="82" Maximum="1024" Minimum="128" Value="512" TickPlacement="BottomRight" TickFrequency="128" AutoToolTipPlacement="TopLeft" LargeChange="32" SmallChange="32" ValueChanged="slider_ValueChanged"/>
+                    <Slider x:Name="slider" IsSnapToTickEnabled="True" Width="82" Maximum="2048" Minimum="128" Value="512" TickPlacement="BottomRight" TickFrequency="128" AutoToolTipPlacement="TopLeft" LargeChange="32" SmallChange="32" ValueChanged="slider_ValueChanged"/>
                 </StackPanel>
                 <TextBox x:Name="txt_slider" Text="512" Height="23" TextWrapping="NoWrap" PreviewTextInput="txt_slider_PreviewTextInput" Margin="70,0,0,0" TextChanged="txt_slider_TextChanged"  />
                 <Button x:Name="btn_readObj" HorizontalAlignment="Left" Margin="0,5,0,-1" VerticalAlignment="Top" Width="148" Height="22" IsEnabled="False" Click="btn_readObj_Click">
