@@ -954,6 +954,13 @@ namespace EvoEditApp
             window.Owner = this;
             window.Show();
         }
+
+        private void OpenClippingConfig_click(object sender, RoutedEventArgs e)
+        {
+            var window = new ClipWindow();
+            window.Owner = this;
+            window.Show();
+        }
     }
     
 }

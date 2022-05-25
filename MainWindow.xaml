@@ -59,7 +59,7 @@
                 </MenuItem>
                 <MenuItem x:Name ="ConfigureHeader" Header="_Configure" Width="65" >
                     <MenuItem Header="_Colors" Click="OpenColorConfig_click"/>
-                    <MenuItem Header="_Block Mapping" Click="Coming_Soon"/>
+                    <MenuItem Header="_Block Clipping" Click="OpenClippingConfig_click"/>
                     <MenuItem Header="_Rescale" Click="OpenRescaleConfig_click"/>
                 </MenuItem>
                 <MenuItem Header="_Help" Width="94" >

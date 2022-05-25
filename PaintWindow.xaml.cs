@@ -414,11 +414,12 @@ namespace EvoEditApp
             }
         }
 
-        private struct sevocol
+        public struct sevocol : IEquatable<sevocol>
         {
             private byte r;
             private byte g;
             private byte b;
+
 
             public sevocol(Color color)
             {
@@ -445,6 +446,27 @@ namespace EvoEditApp
             public Color C()
             {
                 return Color.FromRgb(r, g, b);
+            }
+
+            public bool Equals(sevocol other)
+            {
+                return r == other.r && g == other.g && b == other.b;
+            }
+
+            public override bool Equals(object obj)
+            {
+                return obj is sevocol other && Equals(other);
+            }
+
+            public override int GetHashCode()
+            {
+                unchecked
+                {
+                    var hashCode = r.GetHashCode();
+                    hashCode = (hashCode * 397) ^ g.GetHashCode();
+                    hashCode = (hashCode * 397) ^ b.GetHashCode();
+                    return hashCode;
+                }
             }
         }
 
@@ -477,18 +499,6 @@ namespace EvoEditApp
                 Dictionary<sevocol, sevocol> remap = MyListBoxData.Where(cswap => cswap.diff()).ToDictionary(cswap => new sevocol(cswap.ColorOld), cswap => new sevocol(cswap.ColorNew));
                 int sc = 1;
 
-                List<int> touch = new List<int>() { 84, 78, 85, 3, 255, 181 };
-                /*
-
-                for (int i = 0; i < x.BrickDatasChildrens[13].Datas.Length; i++)
-                {
-                    if (touch.Contains(x.BrickDatasChildrens[13].Datas[i].brickId))
-                    {
-                      x.BrickDatasChildrens[13].Datas[i].gridPosition.Z -= 2;
-                    }
-                }*/
-
-
                 for (int i = 0; i < x.BrickDatasChildrens.Count; i++)
                 {
                     if (x.BrickDatasChildrens[i].Datas != null)
@@ -506,91 +516,20 @@ namespace EvoEditApp
                         }
                     }
                 }
-
-                //x.BrickDatasChildrens[12].Datas[63].scale = range_to_scale(2, 0, 5);
-                //x.BrickDatasChildrens[1].Datas[1].gridPosition = new Vector3i(0, 2, 0);
-                //x.BrickDatasChildrens[2].Datas[1].gridPosition = new Vector3i(0, 2, 0);
-
+                
                 int count = 0;
                 int check = 0;
                 for (int i = 0; i < x.BrickDatas.Datas.Length; i++)
                 {
                     if (x.BrickDatas.Datas[i].brickId != 0)
                     {
-                    
-                        /*
-                        sc = 9;
-                        int constan = 4 * (int)Math.Pow(2, sc);
-                        int norm = 4 * (int)Math.Pow(2, x.BrickDatas.Datas[i].gridSize);
-                        x.BrickDatas.Datas[i].gridPosition = new Vector3i((int)(((double)x.BrickDatas.Datas[i].gridPosition.X/ (double)norm) * constan),
-                            (int)(((double)x.BrickDatas.Datas[i].gridPosition.Y / (double)norm) * constan), (int)(((double)x.BrickDatas.Datas[i].gridPosition.Z / (double)norm) * constan));
-                        x.BrickDatas.Datas[i].gridPosition += new Vector3i(1008, -16, 1008);
-                        x.BrickDatas.Datas[i].gridSize = (byte)sc;*/
-
-
                         var c = new sevocol(x.BrickDatas.Datas[i].color);
                         if (remap.ContainsKey(c))
                         {
                             x.BrickDatas.Datas[i].color = remap[c].sevoC();
                         }
-                        //  x.BrickDatas.Datas[i].scale = range_to_scale(1, 0, 1);
                     }
                 }
-
-                x.BrickDatas.Datas[2].scale = range_to_scale(0, 7, 0);
-
-                // x.BrickDatas.IdsToRecycle= x.BrickDatas.IdsToRecycle.Append(5);
-
-                // if (x.BrickDatas.Datas[i].brickId == 3)
-                //   {
-                //     x.BrickDatas.Datas[i].brickId = 78;
-                //   }
-                //if (x.BrickDatas.Datas[i].brickId == 84)
-                // {
-                // x.BrickDatas.Datas[i].gridPosition.X += 12;
-                // x.BrickDatas.Datas[i].scale = range_to_scale(0, 7, 0);
-                //x.BrickDatas.Datas[i].gridPosition.X -= 18;
-                // }
-                //if (x.BrickDatas.Datas[i].brickId == 80)
-                //{
-                // x.BrickDatas.Datas[i].scale = range_to_scale(0, 7, 0);
-                //  //x.BrickDatas.Datas[i].gridPosition.X -= 18;
-                //  }
-
-                //x.BrickDatas.Datas[i].gridPosition = new Vector3i(x.BrickDatas.Datas[i].gridPosition.X,
-                // (x.BrickDatas.Datas[i].gridPosition.Y / (4 * (int)Math.Pow(2, x.BrickDatas.Datas[i].gridSize))) * 4 * (int)Math.Pow(2, sc), x.BrickDatas.Datas[i].gridPosition.Z);
-                //x.BrickDatas.Datas[i].gridPosition += new Vector3i(4, 0, 4);
-                /*
-                  if (x.BrickDatas.Datas[i].brickId == 3)
-                  {
-                    if(check == 1)
-                    {
-                        x.BrickDatas.Datas[i] = x.BrickDatas.Datas[0];
-                    }
-                    else
-                    {
-                        x.BrickDatas.Datas[i].scale = range_to_scale(0, 7, 0);
-                    }
-                    check = 1;
-                    //x.BrickDatas.Datas[i].scale = 240;
-                    //x.BrickDatas.Datas[i].gridPosition -= 3*x.BrickDatas.Datas[i].gridPosition;
-                  }
-                */
-                //x.BrickDatas.Datas[i].brickId = 85;
-                //x.BrickDatas.Datas[i].gridSize = (byte)sc;
-
-                //count++;
-
-                /* { 0, new Vector3i(2, 0, 2) },
-                { 1, new Vector3i(4, 0, 4) },
-                { 2, new Vector3i(8, 0, 8) },
-                { 3, new Vector3i(0, 16, 0) },//1m
-                { 4, new Vector3i(16, -16, 16) },//2m //8 = 0.375m
-                { 5, new Vector3i(48, -16, 48) },//4m
-                { 6, new Vector3i(112,-16, 112) },//8m
-                { 7, new Vector3i(240, -16, 240) },//16m
-                { 8, new Vector3i(496, -16, 496) } //32m
-                { 9, new Vector3i(1008, -16, 1008) } //64m*/
 
                 ParentEntity parent = new ParentEntity(x);
 
