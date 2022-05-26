@@ -6,8 +6,8 @@
         xmlns:local="clr-namespace:EvoEditApp"
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         mc:Ignorable="d"
-        Title="ClipWindow" Height="244" Width="385">
-    <Grid Height="226" VerticalAlignment="Top">
+        Title="ClipWindow" Height="244" Width="388">
+    <Grid Height="226" VerticalAlignment="Top" Margin="0,0,10,0">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="43*"/>
             <ColumnDefinition Width="91*"/>

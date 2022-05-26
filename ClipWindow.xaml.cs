@@ -191,6 +191,7 @@ namespace EvoEditApp
                 saveFileDialog.Filter = "Blueprint (*.sevo)|*.sevo";
                 if (saveFileDialog.ShowDialog() == true)
                     parent.SaveToDiskAtPathChild(saveFileDialog.FileName, false, x.BrickDatasChildrens);
+                MessageBox.Show("Done", "Export Success",MessageBoxButton.OK);
             }
 
         }

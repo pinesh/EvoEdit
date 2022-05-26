@@ -961,6 +961,13 @@ namespace EvoEditApp
             window.Owner = this;
             window.Show();
         }
+
+        private void OpenWeaponConfig_click(object sender, RoutedEventArgs e)
+        {
+            var window = new WeaponDesigner();
+            window.Owner = this;
+            window.Show();
+        }
     }
     
 }

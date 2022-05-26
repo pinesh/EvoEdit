@@ -57,9 +57,10 @@
                     </MenuItem>
                     <MenuItem Header="_Model (stl/obj/vl32)" Click="model_button_click"/>
                 </MenuItem>
-                <MenuItem x:Name ="ConfigureHeader" Header="_Configure" Width="65" >
+                <MenuItem x:Name ="ConfigureHeader" Header="_Starship Evo" Width="80" >
                     <MenuItem Header="_Colors" Click="OpenColorConfig_click"/>
                     <MenuItem Header="_Block Clipping" Click="OpenClippingConfig_click"/>
+                    <MenuItem Header="_Weapon Designer" Click="OpenWeaponConfig_click"/>
                     <MenuItem Header="_Rescale" Click="OpenRescaleConfig_click"/>
                 </MenuItem>
                 <MenuItem Header="_Help" Width="94" >

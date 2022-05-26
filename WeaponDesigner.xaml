@@ -1,0 +1,35 @@
+﻿<Window x:Class="EvoEditApp.WeaponDesigner"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:EvoEditApp"
+        mc:Ignorable="d"
+        Title="Weapon Designer" Height="129" Width="410">
+   
+    <Grid Height="227" VerticalAlignment="Top" >
+        <StackPanel Orientation="Vertical" Margin="0,0,5,113">
+            <StackPanel Orientation="Horizontal">
+                <Label x:Name="lblType"  Content="Weapon Type: "  />
+                <ComboBox x:Name="cmboxType" Width="115" SelectionChanged="cmboxType_SelectionChanged">
+                    <ComboBoxItem Content="Laser" IsSelected="True"></ComboBoxItem>
+                    <ComboBoxItem Content="Beam" ></ComboBoxItem>
+                    <ComboBoxItem Content="Repair" ></ComboBoxItem>
+                </ComboBox>
+                <Slider x:Name="sliderWeapon" Minimum="1" Maximum="16" SmallChange="1" Value="1" TickPlacement="BottomRight" Width="186" IsSnapToTickEnabled="True" AutoToolTipPlacement="TopLeft"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <Label x:Name="lblBarrel" Content="Barrel:              " Width="88" />
+                <ComboBox x:Name="cmboxBarrel" Width="115" >
+                    <ComboBoxItem Content="None" IsSelected="True"></ComboBoxItem>
+                    <ComboBoxItem Content="Range" ></ComboBoxItem>
+                    <ComboBoxItem Content="Recoil" ></ComboBoxItem>
+                    <ComboBoxItem Content="Heat" ></ComboBoxItem>
+                    <ComboBoxItem Content="Gatling" ></ComboBoxItem>
+                </ComboBox>
+                <Slider x:Name="sliderBarrel"  Minimum="1" Maximum="16" SmallChange="1" Value="1" TickPlacement="BottomRight" Width="185" IsSnapToTickEnabled="True" AutoToolTipPlacement="TopLeft"/>
+            </StackPanel>
+            <Button x:Name="btnExport" Content="Export" Click="btnExport_Click" />
+        </StackPanel>
+    </Grid>
+</Window>
