@@ -34,12 +34,14 @@ namespace EvoEditApp
             ColorChoice.ShowTabHeaders = false;
         }
 
+        private string savename = "";
         private bool compareEqual;
         private string currentfile;
         private Dictionary<PaintWindow.sevocol, int> ColorCount;
+
         private void button_Click_1(object sender, RoutedEventArgs e)
         {
-      
+
             OpenFileDialog openFileDlg = new OpenFileDialog();
             openFileDlg.DefaultExt = ".sevo";
             openFileDlg.Filter = "Blueprint (*.sevo)|*.sevo";
@@ -49,9 +51,9 @@ namespace EvoEditApp
                 currentfile = openFileDlg.FileName;
                 using (FileStream fs = File.OpenRead(openFileDlg.FileName))
                 {
-                     var x = BrickEntityMp.GetSaveFromFile(fs, true);
-                   
-                    
+                    var x = BrickEntityMp.GetSaveFromFile(fs, true);
+
+
                     ColorCount = new Dictionary<PaintWindow.sevocol, int>();
                     foreach (var d in x.BrickDatas.Datas)
                     {
@@ -66,7 +68,10 @@ namespace EvoEditApp
                         }
                     }
 
-                    foreach (var c in from child in x.BrickDatasChildrens where child.Datas?.Length > 0 from d in child.Datas select new PaintWindow.sevocol(d.color))
+                    foreach (var c in from child in x.BrickDatasChildrens
+                             where child.Datas?.Length > 0
+                             from d in child.Datas
+                             select new PaintWindow.sevocol(d.color))
                     {
                         if (ColorCount.ContainsKey(c))
                         {
@@ -83,13 +88,13 @@ namespace EvoEditApp
                     {
                         shipColors.Add(new ColorItem(pair.Key.C(), ""));
                     }
-                    
+
                     var val = from ele in ColorCount
-                              orderby ele.Value descending
-                              select ele;
+                        orderby ele.Value descending
+                        select ele;
                     ColorChoice.SelectedColor = val.ElementAt(0).Key.C();
                     ColorChoice.AvailableColors = shipColors;
-                  
+
                     lblBP.Content = Path.GetFileName(currentfile);
                     Flip();
                 }
@@ -114,10 +119,14 @@ namespace EvoEditApp
             e.Handled = regex.IsMatch(e.Text);
         }
 
-        private void updateBlocks(PaintWindow.sevocol c,bool comp)
+        private void updateBlocks(PaintWindow.sevocol c, bool comp)
         {
-            lblblocks.Content = comp ? $"Move all ({ColorCount[c]}) blocks where color is" : $"Move all ({ColorCount.Where(keypair => !keypair.Key.Equals(c)).Sum(keypair => keypair.Value)}) blocks where color is";
+            lblblocks.Content =
+                comp
+                    ? $"Move all ({ColorCount[c]}) blocks where color is"
+                    : $"Move all ({ColorCount.Where(keypair => !keypair.Key.Equals(c)).Sum(keypair => keypair.Value)}) blocks where color is";
         }
+
         private void export_button_Click(object sender, RoutedEventArgs e)
         {
             if (!new FileInfo(currentfile).Exists)
@@ -157,11 +166,13 @@ namespace EvoEditApp
                                     x.BrickDatasChildrens[i].Datas[j].brickId == 26 ||
                                     x.BrickDatasChildrens[i].Datas[j].brickId == 110)
                                 {
-
+                                    //if(checkBox_cursed.IsChecked.Value == true)
+                                    // x.BrickDatasChildrens[i].Datas[j].gridPosition += new Vector3i(xOffset, yOffset, zOffset);
                                 }
                                 else
                                 {
-                                    x.BrickDatasChildrens[i].Datas[j].gridPosition += new Vector3i(xOffset, yOffset, zOffset);
+                                    x.BrickDatasChildrens[i].Datas[j].gridPosition +=
+                                        new Vector3i(xOffset, yOffset, zOffset);
                                 }
                             }
                         }
@@ -175,7 +186,9 @@ namespace EvoEditApp
                             new PaintWindow.sevocol(ColorChoice.SelectedColor.Value)) == compareEqual)
                     {
                         x.BrickDatas.Datas[i].gridPosition += new Vector3i(xOffset, yOffset, zOffset);
+                        
                     }
+                    x.BrickDatas.Datas[i].gridPosition -= _relocation;
                 }
 
                 ParentEntity parent = new ParentEntity(x);
@@ -189,9 +202,14 @@ namespace EvoEditApp
 
                 SaveFileDialog saveFileDialog = new SaveFileDialog();
                 saveFileDialog.Filter = "Blueprint (*.sevo)|*.sevo";
+                saveFileDialog.FileName = savename;
                 if (saveFileDialog.ShowDialog() == true)
+                {
                     parent.SaveToDiskAtPathChild(saveFileDialog.FileName, false, x.BrickDatasChildrens);
-                MessageBox.Show("Done", "Export Success",MessageBoxButton.OK);
+                    savename = saveFileDialog.SafeFileName;
+                }
+
+                MessageBox.Show("Done", "Export Success", MessageBoxButton.OK);
             }
 
         }
@@ -202,6 +220,7 @@ namespace EvoEditApp
             {
                 txtY.Text = "0";
             }
+
             if (txtY.Text.Contains(" "))
             {
                 txtY.Text = txtY.Text.Replace(" ", string.Empty);
@@ -214,6 +233,7 @@ namespace EvoEditApp
             {
                 txtZ.Text = "0";
             }
+
             if (txtZ.Text.Contains(" "))
             {
                 txtZ.Text = txtZ.Text.Replace(" ", string.Empty);
@@ -225,7 +245,8 @@ namespace EvoEditApp
             txtX.IsEnabled = !txtX.IsEnabled;
             txtY.IsEnabled = !txtY.IsEnabled;
             txtZ.IsEnabled = !txtZ.IsEnabled;
-
+            // checkBox_cursed.IsEnabled = !checkBox_cursed.IsEnabled;
+            resetOriginCheckbox.IsEnabled = !resetOriginCheckbox.IsEnabled;
             ColorChoice.IsEnabled = !ColorChoice.IsEnabled;
             EqualityBox.IsEnabled = !EqualityBox.IsEnabled;
             checkBox.IsEnabled = !checkBox.IsEnabled;
@@ -238,6 +259,7 @@ namespace EvoEditApp
             {
                 txtX.Text = "0";
             }
+
             if (txtX.Text.Contains(" "))
             {
                 txtX.Text = txtX.Text.Replace(" ", string.Empty);
@@ -247,15 +269,46 @@ namespace EvoEditApp
         private void EqualityBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             compareEqual = (sender as ComboBox).SelectedIndex == 0;
-            if(ColorChoice.SelectedColor != null)
+            if (ColorChoice.SelectedColor != null)
                 updateBlocks(new PaintWindow.sevocol(ColorChoice.SelectedColor.Value), compareEqual);
         }
 
         private void ColorChoice_SelectedColorChanged(object sender, RoutedPropertyChangedEventArgs<Color?> e)
         {
-          
-            updateBlocks(new PaintWindow.sevocol(e.NewValue.Value),compareEqual);
-           
+
+            updateBlocks(new PaintWindow.sevocol(e.NewValue.Value), compareEqual);
+        }
+
+        private Vector3i _relocation = new Vector3i(0, 0, 0);
+        private bool _relocateChecked = false;
+
+        private void resetOrigin_Checked(object sender, RoutedEventArgs e)
+        {
+            _relocateChecked = !_relocateChecked;
+
+            if (_relocateChecked == false)
+            {
+                _relocation = new Vector3i(0, 0, 0);
+                return;
+            }
+
+            using (FileStream fs = File.OpenRead(currentfile))
+            {
+                var x = BrickEntityMp.GetSaveFromFile(fs, true);
+
+                for (var i = 0; i < x.BrickDatas.Datas.Length; i++)
+                {
+                    if (x.BrickDatas.Datas[i].brickId != 14) continue;
+                    _relocation = x.BrickDatas.Datas[i].gridPosition;
+                    _relocation.X += (int)Math.Pow(2, x.BrickDatas.Datas[i].gridSize + 1);
+                    _relocation.Z += (int)Math.Pow(2, x.BrickDatas.Datas[i].gridSize + 1);
+                    MessageBox.Show($"Relocating global origin to {_relocation.X},{_relocation.Y},{_relocation.Z}.", "Relocation", MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+                    return;
+                }
+
+                MessageBox.Show("No Starter Block located. Check the base entity.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
         }
     }
 }

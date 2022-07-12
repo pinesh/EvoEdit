@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:EvoEditApp"
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         mc:Ignorable="d"
-        Title="ClipWindow" Height="244" Width="388">
+        Title="Entity Clipper" Height="244" Width="388">
     <Grid Height="226" VerticalAlignment="Top" Margin="0,0,10,0">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="43*"/>
@@ -42,5 +42,6 @@
         <Label x:Name="lblBP" Content="none " HorizontalAlignment="Left" Margin="91,33,0,0" VerticalAlignment="Top" Width="76" Height="27" Grid.ColumnSpan="2"/>
         <Button x:Name="BtnExport" Content="Export Blueprint" HorizontalAlignment="Left" Margin="10,174,0,0" VerticalAlignment="Top" Width="368" Click="export_button_Click" Height="20" IsEnabled="False" Grid.ColumnSpan="2"/>
         <CheckBox x:Name="checkBox" Content="Include Child Entities" HorizontalAlignment="Left" Margin="11,149,0,0" VerticalAlignment="Top" IsChecked="True" Height="15" Width="130" IsEnabled="False" Grid.ColumnSpan="2"/>
+        <CheckBox x:Name="resetOriginCheckbox" Grid.Column="1" Content="Reset global origin to Starter block" HorizontalAlignment="Left" Margin="46,149,0,0" VerticalAlignment="Top" Checked="resetOrigin_Checked" IsEnabled="False"/>
     </Grid>
 </Window>

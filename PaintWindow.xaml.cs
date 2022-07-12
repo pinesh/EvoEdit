@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using System.Security.RightsManagement;
 using System.Text;
 using System.Windows;
 using System.Windows.Forms;
@@ -292,18 +293,36 @@ namespace EvoEditApp
                 set;
             }
 
-            public ColorSwap(Color old, ObservableCollection<ColorItem> norm, ObservableCollection<ColorItem> Skywanderers)
+            public int MaterialIndex
+            {
+                get;
+                set;
+            }
+
+        public int MaterialIndexNew
+            {
+                get;
+                set;
+            }
+
+        public ColorSwap(Color old, ObservableCollection<ColorItem> norm, ObservableCollection<ColorItem> Skywanderers,int index)
             {
                 ColorOld = old;
                 ColorNew = old;
                 AllColors = Skywanderers;
                 NonstandardColors = norm;
+                MaterialIndex = index;
+                MaterialIndexNew = index;
+               
             }
 
             public bool diff()
             {
-                return ColorOld != ColorNew;
+                return ColorOld != ColorNew || MaterialIndex!= MaterialIndexNew;
             }
+
+
+        
 
             public Color ColorOld
             {
@@ -342,23 +361,16 @@ namespace EvoEditApp
                 using (FileStream fs = File.OpenRead(openFileDlg.FileName))
                 {
                      var x = BrickEntityMp.GetSaveFromFile(fs, true);
-                    /*
-                    if (old == null)
-                    {
-                        old = x;
-                    }
-                    else
-                    {
-                        finddiff(old,x);
-                    }
-                    */
-                    var s = new StringBuilder();
+                     var s = new StringBuilder();
                     // color = (object)new object[] { paint.X, paint.Y, paint.Z, 255 }
-                    Dictionary<sevocol, int> ColorCount = new Dictionary<sevocol, int>();
+                    Dictionary<Tuple<sevocol,int>, int> ColorCount = new Dictionary<Tuple<sevocol, int>, int>();
                     foreach (var d in x.BrickDatas.Datas)
                     {
+
+                        if(d.brickId == 0) continue;
                         //Console.WriteLine(d.brickId);
-                        var c = new sevocol(d.color);
+                        var c = new Tuple<sevocol, int>(new sevocol(d.color), (int)d.material);
+                        //var c = new sevocol(d.color);
                         if (ColorCount.ContainsKey(c))
                         {
                             ColorCount[c] += 1;
@@ -369,38 +381,25 @@ namespace EvoEditApp
                         }
                     }
 
-                    for (int i = 0; i < x.BrickDatasChildrens.Count; i++)
-                    {
-                        if (x.BrickDatasChildrens[i].Datas?.Length > 0)
-                        {
-                            foreach (var ind in x.BrickDatasChildrens[i].Datas)
-                            {
-                                if (ind.Material == 2)
-                                {
-                                    Console.WriteLine(i);
-                                    //break;
-                                }
-                            }
-                        }
-                    }
                     
-
-                    foreach (var c in from child in x.BrickDatasChildrens where child.Datas?.Length > 0 from d in child.Datas select new sevocol(d.color))
+                    foreach (var c in from child in x.BrickDatasChildrens where child.Datas?.Length > 0 from d in child.Datas select new Tuple<sevocol,int,int>(new sevocol(d.color), (int)(d.material),d.brickId))
                     {
-                        if (ColorCount.ContainsKey(c))
+                        if(c.Item3 == 0) continue;
+                        var tempc = new Tuple<sevocol, int>(c.Item1, c.Item2);
+                        if (ColorCount.ContainsKey(tempc))
                         {
-                            ColorCount[c] += 1;
+                            ColorCount[tempc] += 1;
                         }
                         else
                         {
-                            ColorCount.Add(c, 1);
+                            ColorCount.Add(tempc, 1);
                         }
                     }
 
                     ObservableCollection<ColorItem> shipColors = new ObservableCollection<ColorItem>();
                     foreach (var pair in ColorCount)
                     {
-                        shipColors.Add(new ColorItem(pair.Key.C(), ""));
+                        shipColors.Add(new ColorItem(pair.Key.Item1.C(), ""));
                     }
 
                     var val = from ele in ColorCount
@@ -408,7 +407,7 @@ namespace EvoEditApp
                               select ele;
                     foreach (var ele in val)
                     {
-                        MyListBoxData.Add(new ColorSwap(ele.Key.C(), shipColors,Skywanderers));
+                        MyListBoxData.Add(new ColorSwap(ele.Key.Item1.C(), shipColors,Skywanderers,ele.Key.Item2));
                     }
                 }
             }
@@ -491,12 +490,7 @@ namespace EvoEditApp
                 var x = BrickEntityMp.GetSaveFromFile(fs, true);
                 var s = new StringBuilder();
 
-                foreach (var d in x.BrickDatas.Datas)
-                {
-                    s.AppendLine("[" + d.gridPosition.X + "," + d.gridPosition.Y + "," + d.gridPosition.Z + "]");
-                }
-
-                Dictionary<sevocol, sevocol> remap = MyListBoxData.Where(cswap => cswap.diff()).ToDictionary(cswap => new sevocol(cswap.ColorOld), cswap => new sevocol(cswap.ColorNew));
+                Dictionary<Tuple<sevocol,int>, Tuple<sevocol, int>> remap = MyListBoxData.Where(cswap => cswap.diff()).ToDictionary(cswap =>new Tuple<sevocol, int>(new sevocol(cswap.ColorOld),cswap.MaterialIndex)  , cswap => new Tuple<sevocol, int>(new sevocol(cswap.ColorNew), cswap.MaterialIndexNew));
                 int sc = 1;
 
                 for (int i = 0; i < x.BrickDatasChildrens.Count; i++)
@@ -507,10 +501,11 @@ namespace EvoEditApp
                         {
                             if (x.BrickDatasChildrens[i].Datas[j].brickId != 0)
                             {
-                                var c = new sevocol(x.BrickDatasChildrens[i].Datas[j].color);
+                                var c = new Tuple<sevocol, int>(new sevocol(x.BrickDatasChildrens[i].Datas[j].color), (int)(x.BrickDatasChildrens[i].Datas[j].material)) ;
                                 if (remap.ContainsKey(c))
                                 {
-                                    x.BrickDatasChildrens[i].Datas[j].color = remap[c].sevoC();
+                                    x.BrickDatasChildrens[i].Datas[j].color = remap[c].Item1.sevoC();
+                                    x.BrickDatasChildrens[i].Datas[j].material = (uint)remap[c].Item2;
                                 }
                             }
                         }
@@ -523,10 +518,11 @@ namespace EvoEditApp
                 {
                     if (x.BrickDatas.Datas[i].brickId != 0)
                     {
-                        var c = new sevocol(x.BrickDatas.Datas[i].color);
+                        var c = new Tuple<sevocol, int>(new sevocol(x.BrickDatas.Datas[i].color), (int)(x.BrickDatas.Datas[i].material));
                         if (remap.ContainsKey(c))
                         {
-                            x.BrickDatas.Datas[i].color = remap[c].sevoC();
+                            x.BrickDatas.Datas[i].color = remap[c].Item1.sevoC();
+                            x.BrickDatas.Datas[i].material = (uint)remap[c].Item2;
                         }
                     }
                 }

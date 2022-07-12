@@ -968,6 +968,7 @@ namespace EvoEditApp
             window.Owner = this;
             window.Show();
         }
+
     }
     
 }
