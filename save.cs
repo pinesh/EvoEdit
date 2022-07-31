@@ -85,6 +85,21 @@ namespace EvoEditApp
 
             if (array != null && array.Length != 0)
             {
+                var baseD = new DirectoryInfo(Path.GetDirectoryName(path));
+
+                //if we are not already in target folder
+                if (baseD.Name != Path.GetFileNameWithoutExtension(path))
+                {
+                    var d = new DirectoryInfo(Path.Combine(Path.GetDirectoryName(path),
+                        Path.GetFileNameWithoutExtension(path)));
+                    if (!d.Exists)
+                    {
+                        d.Create();
+                    }
+                    path = Path.Combine(d.FullName, Path.GetFileName(path));
+                }
+
+           
                 using (FileStream fileStream = File.Create(path))
                 {
                     fileStream.Write(array, 0, array.Length);
@@ -130,6 +145,21 @@ namespace EvoEditApp
 
             if (array != null && array.Length != 0)
             {
+                var baseD = new DirectoryInfo(Path.GetDirectoryName(path));
+
+                //if we are not already in target folder
+                if (baseD.Name != Path.GetFileNameWithoutExtension(path))
+                {
+                    var d = new DirectoryInfo(Path.Combine(Path.GetDirectoryName(path),
+                        Path.GetFileNameWithoutExtension(path)));
+                    if (!d.Exists)
+                    {
+                        d.Create();
+                    }
+                    path = Path.Combine(d.FullName, Path.GetFileName(path));
+                }
+
+            
                 using (FileStream fileStream = File.Create(path))
                 {
                     fileStream.Write(array, 0, array.Length);

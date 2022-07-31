@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 
@@ -62,6 +63,18 @@ namespace EvoEditApp
         public FooViewModel(string name,string path)
         {
             this.Name = name;
+
+            if (path.Length >0)
+            {
+                string[] files = System.IO.Directory.GetFiles(path, "*.smd3");
+                if (files.Length == 0)
+                    files = System.IO.Directory.GetFiles(path, "*.smd2");
+                if (files.Length != 0)
+                {
+                    this.Name = name + $" (approx {(int)(new FileInfo(files[0]).Length / 34)} blocks)";
+                }
+                  
+            }
             this.path = path;
             this.Children = new ObservableCollection<FooViewModel>();
         }
@@ -84,8 +97,8 @@ namespace EvoEditApp
 
         public bool? IsChecked
         {
-            get { return _isChecked; }
-            set { this.SetIsChecked(value, true, true); }
+            get => _isChecked;
+            set => this.SetIsChecked(value, true, true);
         }
 
         

@@ -16,47 +16,22 @@ namespace EvoEditApp
 	{
 		// Token: 0x170000FB RID: 251
 		// (get) Token: 0x060008B7 RID: 2231 RVA: 0x000342E6 File Offset: 0x000324E6
-		public ushort ItemID
-		{
-			get
-			{
-				return (ushort)this.brickID;
-			}
-		}
+		public ushort ItemID => (ushort)this.brickID;
 
-		// Token: 0x170000FC RID: 252
+        // Token: 0x170000FC RID: 252
 		// (get) Token: 0x060008B8 RID: 2232 RVA: 0x0000DD30 File Offset: 0x0000BF30
-		public byte ItemType
-		{
-			get
-			{
-				return 1;
-			}
-		}
+		public byte ItemType => 1;
 
-		// Token: 0x170000FE RID: 254
+        // Token: 0x170000FE RID: 254
 		// (get) Token: 0x060008BA RID: 2234 RVA: 0x0000DD30 File Offset: 0x0000BF30
-		public bool ShowEntityInfo
-		{
-			get
-			{
-				return true;
-			}
-		}
+		public bool ShowEntityInfo => true;
 
-		// Token: 0x17000102 RID: 258
+        // Token: 0x17000102 RID: 258
 		// (get) Token: 0x060008BE RID: 2238 RVA: 0x00034327 File Offset: 0x00032527
-		public bool hasRepeatBrick
-		{
-			get
-			{
-				return this.repeatBrickId > 0 | this.repeatEvenBrickId > 0 | this.repeatOddBrickId > 0;
-			}
-		}
+		public bool hasRepeatBrick => this.repeatBrickId > 0 | this.repeatEvenBrickId > 0 | this.repeatOddBrickId > 0;
 
 
-
-		private string name;
+        private string name;
 		private string nameMesh;
 
 		// Token: 0x060008D3 RID: 2259 RVA: 0x00034424 File Offset: 0x00032624

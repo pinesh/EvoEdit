@@ -48,6 +48,8 @@ namespace EvoEditApp
 
         public MainWindow()
         {
+            var window = new EvoEditWindow();
+            window.Show();
             InitializeComponent();
             _temppath = "";
             _globaldestinationpath = @"";
@@ -568,6 +570,7 @@ namespace EvoEditApp
             public string newfilename;
             public Vector3i min;
             public Dictionary<Vector3i, BlockBit> blocks;
+            public Dictionary<Vector3i, BlockBit> blocksDiff;
             public int capturescale;
 
         }

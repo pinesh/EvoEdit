@@ -6,14 +6,14 @@
         xmlns:local="clr-namespace:EvoEditApp"
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit" x:Class="EvoEditApp.PaintWindow"
         mc:Ignorable="d"
-        Title="Paint Replacer" Height="424" Width="370">
+        Title="Paint Replacer" Height="424" Width="586">
 
     <Window.Resources>
         <DataTemplate x:Key="ColorTemplate">
             <StackPanel Orientation="Horizontal">
                 <xctk:ColorPicker SelectedColor="{Binding Path=ColorOld}"  ShowDropDownButton ="False"/>
                 <TextBlock Text="|"/>
-                <ComboBox SelectedIndex="{Binding Path= MaterialIndex}">
+                <ComboBox SelectedIndex="{Binding Path= MaterialIndex}" IsEnabled="False">
                     <ComboBoxItem Content="Steel"></ComboBoxItem>
                     <ComboBoxItem Content="Gold"></ComboBoxItem>
                     <ComboBoxItem Content="Brass"></ComboBoxItem>
@@ -34,18 +34,19 @@
                     <ComboBoxItem Content="Dark"></ComboBoxItem>
                     <ComboBoxItem Content="Matte"></ComboBoxItem>
                 </ComboBox>
+                <CheckBox Name="KeepBox" IsChecked="{Binding Path = RemoveBool}" Content="Keep"></CheckBox>
             </StackPanel>
         </DataTemplate>
     </Window.Resources>
 
 
-    <Grid Margin="0,0,0,-6" HorizontalAlignment="Center" Width="370">
-        <GroupBox x:Name="groupBox1_Copy" Header="Paints" HorizontalAlignment="Left" Height="288" Margin="10,61,0,0" VerticalAlignment="Top" Width="346">
-            <ListBox x:Name="ColorBox" HorizontalAlignment="Left" Height="265" VerticalAlignment="Center" Width="332"  ItemTemplate="{StaticResource ColorTemplate}"/>
+    <Grid Margin="0,0,0,-6" HorizontalAlignment="Center" Width="566">
+        <GroupBox x:Name="groupBox1_Copy" Header="Paints" HorizontalAlignment="Center" Height="288" Margin="0,61,0,0" VerticalAlignment="Top" Width="547">
+            <ListBox x:Name="ColorBox" HorizontalAlignment="Left" Height="265" VerticalAlignment="Center" Width="537"  ItemTemplate="{StaticResource ColorTemplate}"/>
         </GroupBox>
-        <Button x:Name="BtnOpenBlueprint" Content="Open Blueprint" HorizontalAlignment="Left" Margin="10,41,0,0" VerticalAlignment="Top" Width="346" Click="button_Click_1"/>
-        <Button x:Name="BtnExportBlueprint" Content="Export Blueprint" HorizontalAlignment="Left" Margin="9,354,0,0" VerticalAlignment="Top" Width="347" Click="button_Click_export"/>
-        <Menu x:Name="menu" HorizontalAlignment="Center" Height="28" VerticalAlignment="Top" Width="371">
+        <Button x:Name="BtnOpenBlueprint" Content="Open Blueprint" HorizontalAlignment="Center" Margin="0,41,0,0" VerticalAlignment="Top" Width="546" Click="button_Click_1"/>
+        <Button x:Name="BtnExportBlueprint" Content="Export Blueprint" HorizontalAlignment="Center" Margin="0,354,0,0" VerticalAlignment="Top" Width="547" Click="button_Click_export"/>
+        <Menu x:Name="menu" HorizontalAlignment="Left" Height="28" VerticalAlignment="Top" Width="556">
             <MenuItem Header="Load Custom Paint" Height="28" Width="113" Click="MenuItem_Click"/>
 
         </Menu>

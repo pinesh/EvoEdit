@@ -9,151 +9,56 @@ namespace EvoEditApp
     public struct BrickInstanceData
     {
         [IgnoreMember]
-        public Brick brick
-        {
-            get
-            {
-                return Brick.BRICK_INDEX[(int)this.brickId];
-            }
-        }
+        public Brick brick => Brick.BRICK_INDEX[(int)this.brickId];
 
         [IgnoreMember]
-        public float healthFactor
-        {
-            get
-            {
-                return (float)this.healthScore / 255f;
-            }
-        }
+        public float healthFactor => (float)this.healthScore / 255f;
 
         [IgnoreMember]
-        public int Material
-        {
-            get
-            {
-                return (int)this.material;
-            }
-        }
+        public int Material => (int)this.material;
 
         [IgnoreMember]
-        public Vector3 Position
-        {
-            get
-            {
-                return new Vector3((float)this.gridPosition.X / 32f, (float)this.gridPosition.Y / 32f, (float)this.gridPosition.Z / 32f);
-            }
-        }
+        public Vector3 Position => new Vector3((float)this.gridPosition.X / 32f, (float)this.gridPosition.Y / 32f, (float)this.gridPosition.Z / 32f);
 
         [IgnoreMember]
-        public Vector3i Scale
-        {
-            get
-            {
-                return new Vector3i((int)(this.scale & 15), this.scale >> 4 & 15, this.scale >> 8 & 15);
-            }
-        }
+        public Vector3i Scale => new Vector3i((int)(this.scale & 15), this.scale >> 4 & 15, this.scale >> 8 & 15);
 
         [IgnoreMember]
-        public Vector3 scaleFloat
-        {
-            get
-            {
-                return new Vector3((float)(this.scale & 15), (float)(this.scale >> 4 & 15), (float)(this.scale >> 8 & 15));
-            }
-        }
+        public Vector3 scaleFloat => new Vector3((float)(this.scale & 15), (float)(this.scale >> 4 & 15), (float)(this.scale >> 8 & 15));
 
         [IgnoreMember]
-        public Vector3 scaleFloatCollision
-        {
-            get
-            {
-                return this.brick.CollisionScaleFactor * this.scaleFloat;
-            }
-        }
+        public Vector3 scaleFloatCollision => this.brick.CollisionScaleFactor * this.scaleFloat;
 
         [IgnoreMember]
-        public int Quaternion
-        {
-            get
-            {
-                return (int)this.rotation;
-            }
-        }
+        public int Quaternion => (int)this.rotation;
 
         [IgnoreMember]
-        public int quaternionInv
-        {
-            get
-            {
-                return (int)this.rotation;
-            }
-        }
+        public int quaternionInv => (int)this.rotation;
 
         [IgnoreMember]
-        public bool IsMaxHealth
-        {
-            get
-            {
-                return this.healthScore == byte.MaxValue;
-            }
-        }
+        public bool IsMaxHealth => this.healthScore == byte.MaxValue;
 
         [IgnoreMember]
-        public bool IsValid
-        {
-            get
-            {
-                return this.instanceId != 0 && this.brickId > 0;
-            }
-        }
+        public bool IsValid => this.instanceId != 0 && this.brickId > 0;
 
         [IgnoreMember]
-        public float GridSize
-        {
-            get
-            {
-                return (float)Math.Pow(2f, (float)this.gridSize) * 0.125f;
-                //return GetGridSize(this.brick, (int)this.gridSize);
-            }
-        }
+        public float GridSize => (float)Math.Pow(2f, (float)this.gridSize) * 0.125f;
+
+        //return GetGridSize(this.brick, (int)this.gridSize);
+        [IgnoreMember]
+        public int GridSizeUnit =>
+            //return BrickCommon.GetGridSizeUnit((int)this.gridSize);
+            (int)(4f * Math.Pow(2f, (float)this.gridSize));
 
         [IgnoreMember]
-        public int GridSizeUnit
-        {
-            get
-            {
-                //return BrickCommon.GetGridSizeUnit((int)this.gridSize);
-                return (int)(4f * Math.Pow(2f, (float)this.gridSize));
-            }
-        }
+        public int UnitGrid => 0;
+
+        //return (int)Math.Round(this.GridSize * (float)this.brick.VoxelMesh.ResizeMode.unitStud);
+        [IgnoreMember]
+        public int MaximumHealthPoint => 255;
 
         [IgnoreMember]
-        public int UnitGrid
-        {
-            get
-            {
-                return 0;
-                //return (int)Math.Round(this.GridSize * (float)this.brick.VoxelMesh.ResizeMode.unitStud);
-            }
-        }
-
-        [IgnoreMember]
-        public int MaximumHealthPoint
-        {
-            get
-            {
-                return 255;
-            }
-        }
-
-        [IgnoreMember]
-        public int CurrentHealthPoint
-        {
-            get
-            {
-                return (int)Math.Ceiling(this.healthFactor * (float)this.MaximumHealthPoint);
-            }
-        }
+        public int CurrentHealthPoint => (int)Math.Ceiling(this.healthFactor * (float)this.MaximumHealthPoint);
 
         public float GetGridSize(bool isDynamicGridSize)
         {
@@ -231,5 +136,7 @@ namespace EvoEditApp
 
         [Key(8)]
         public byte gridSize;
+
+
     }
 }

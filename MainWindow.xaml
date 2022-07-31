@@ -108,7 +108,7 @@
                         <Label Content="Read [] Blueprints" VerticalAlignment="Center" 
                                    HorizontalAlignment="Center" VerticalContentAlignment="Center" 
                                    HorizontalContentAlignment="Center" Margin="2 1" Padding="5" 
-                                   Foreground="Gray" FontSize="10" FontWeight="Bold"/>
+                                   Foreground="Gray" FontSize="10" FontWeight="Bold" FontFamily="Osiris"/>
                     </StackPanel>
                 </Button>
             </Grid>
@@ -180,7 +180,6 @@
         </GroupBox>
 
         <GroupBox x:Name="groupBox1" Header="3D" HorizontalAlignment="Left" Height="136" Margin="343,208,0,0" VerticalAlignment="Top" Width="160">
-
             <StackPanel Orientation="Vertical">
                 <StackPanel Orientation="Horizontal">
                     <Label Content="File:"></Label>

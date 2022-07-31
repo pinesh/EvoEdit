@@ -69,6 +69,11 @@ namespace EvoEditApp
 
         public List<BrickInstanceData> ExportBricks(int i)
         {
+            if (Master == null)
+            {
+                return new List<BrickInstanceData>();
+            }
+
             int multiplier = (int)Math.Pow(2, grid_scale);
             List<BrickInstanceData> d = new List<BrickInstanceData>();
             foreach (var newBlock in Mblist)
@@ -121,6 +126,7 @@ namespace EvoEditApp
             //_ok = new SortedDictionary<Vector3i, BlockBit>(new Vector3IComparer());
             this.fast = true;
             Master = l;
+            if (Master == null) return;
             if (!fast)
                 MasterDif = new Dictionary<Vector3i, byte>(Master.Count * 10);
             this._axis = ax;
@@ -130,21 +136,25 @@ namespace EvoEditApp
             this.Scale = (int)(4 * Math.Pow(2, s));
             Mblist = new List<MasterBlock>();
             _ignorePaintFlag = paint;
-            Console.WriteLine(Master.Count);
-            Console.WriteLine($"min = [{Min.X},{Min.Y},{Min.Z}]");
-
         }
-
-
 
         public void Optimize(int axis = 0)
         {
+            if (Master == null) return;
+            Mblist = new List<MasterBlock>();
+            this.Merge();
+        }
+        public void OptimizeSym(int axis = 0)
+        {
             Mblist = new List<MasterBlock>();
             if (axis != 3)
+            {
                 this.MergeWithSym(axis);
+            }
             else
+            {
                 this.Merge();
-            Console.WriteLine($"Reduced to {Mblist.Count} Blocks");
+            }
         }
 
 
@@ -152,24 +162,12 @@ namespace EvoEditApp
         /// Experimental, we want to determine the block width of our data, this might be tricky.
         /// </summary>
         internal void MergeWithSym(int a)
-        {
+        { 
             //a = 0;
             //when we need to rotate along y axis, we need to move along x.
             int? minAxis = null;
             int? maxAxis = null;
-            /*switch (a)
-            {
-                //if y, we divide best on x
-                case 0:
-                    a = 1;
-                    break;
-                case 1:
-                    a = 0;
-                    break;
-                case 2:
-                    a = 2;
-                    break;
-            }*/
+
             var _orderedKeys = new SortedDictionary<Vector3i, BlockBit>(new VoxelCorrections.Vector3IComparer());
             foreach (var keyPair in Master)
             {
@@ -188,14 +186,26 @@ namespace EvoEditApp
                 if (keyPair.Key[a] < minAxis)
                     minAxis = keyPair.Key[a];
 
-                _orderedKeys.Add(keyPair.Key, keyPair.Value);
+                try
+                {
+                    _orderedKeys.Add(keyPair.Key, keyPair.Value);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(keyPair.Key.ToString());
+                    Console.WriteLine(keyPair.Value.get_int_24().ToString());
+                    Console.WriteLine(_orderedKeys[keyPair.Key].get_int_24().ToString());
+                    Console.WriteLine(e);
+                    throw;
+                }
+            
+                
             }
             int og = _orderedKeys.Count;
             Console.WriteLine($"Max = {maxAxis}");
             double median = 0;
 
             //if odd brick, we need to break into 3 parts.
-
             //we break into two parts, all keys on each side of the median.
             median = (double)(minAxis + (double)(maxAxis - minAxis) / 2);
 
@@ -206,23 +216,26 @@ namespace EvoEditApp
             var minor = new SortedDictionary<Vector3i, BlockBit>(new VoxelCorrections.Vector3IComparer());
             var major = new SortedDictionary<Vector3i, BlockBit>(new VoxelCorrections.Vector3IMajorComparer());
             var middle = new SortedDictionary<Vector3i, BlockBit>(new VoxelCorrections.Vector3IComparer());
+            
+            
             foreach (var keyPair in _orderedKeys)
             {
-                if (keyPair.Key[a] > median && keyPair.Value.GetSevoId() == 196)
+                if (keyPair.Key[a] == median && keyPair.Value.GetSevoId() == 196)
+                {
+                    middle.Add(keyPair.Key, keyPair.Value);
+                }
+                else if (keyPair.Key[a] > median && keyPair.Value.GetSevoId() == 196)
                 {
                     //   var orderedKey = _orderedKeys[keyPair.Key];
                     //  orderedKey.invert = true;
                     major.Add(keyPair.Key, keyPair.Value);
                 }
-                else if (keyPair.Key[a] < median)
+                else 
                 {
                     minor.Add(keyPair.Key, keyPair.Value);
                 }
-                else
-                {
-                    middle.Add(keyPair.Key, keyPair.Value);
-                }
             }
+       
 
             int cur = 0;
             int i = 0;
@@ -239,8 +252,9 @@ namespace EvoEditApp
                 if (!Master.ContainsKey(key)) continue;
                 findOne(key);
             }
-
+            Console.WriteLine(Mblist.Count);
             NotifyPropertyChanged($"{100}");
+         
             //merge the minor (old behavior) 
             foreach (var key in minor.Keys.ToList())
             {
@@ -270,7 +284,9 @@ namespace EvoEditApp
                 if (!Master.ContainsKey(keyPair.Key)) continue;
                 findOneInvert(keyPair.Key, 0, keyPair.Value);
             }
+           
         }
+
         internal void Merge()
         {
             _ok = new SortedDictionary<Vector3i, BlockBit>(new VoxelCorrections.Vector3IComparer());

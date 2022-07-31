@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using System.Reactive.Linq;
+using System.Runtime.Serialization;
 using System.Security.RightsManagement;
 using System.Text;
 using System.Windows;
@@ -293,6 +295,18 @@ namespace EvoEditApp
                 set;
             }
 
+            public bool? RemoveBool
+            {
+                get;
+                set;
+            }
+
+            public string MaterialName
+            {
+                get;
+                set;
+            }
+
             public int MaterialIndex
             {
                 get;
@@ -305,46 +319,50 @@ namespace EvoEditApp
                 set;
             }
 
-        public ColorSwap(Color old, ObservableCollection<ColorItem> norm, ObservableCollection<ColorItem> Skywanderers,int index)
-            {
-                ColorOld = old;
-                ColorNew = old;
-                AllColors = Skywanderers;
-                NonstandardColors = norm;
-                MaterialIndex = index;
-                MaterialIndexNew = index;
-               
-            }
+        private static List<string> materialnames = new List<string>() { "Steel", "Gold", "Brass", "Copper", "Silver", "Dark", "Matte" };
 
-            public bool diff()
-            {
-                return ColorOld != ColorNew || MaterialIndex!= MaterialIndexNew;
-            }
+        public ColorSwap(Color old, ObservableCollection<ColorItem> norm, ObservableCollection<ColorItem> Skywanderers, int index)
+        {
+            ColorOld = old;
+            ColorNew = old;
+            AllColors = Skywanderers;
+            NonstandardColors = new ObservableCollection<ColorItem>(norm.ToList().Distinct());
+            MaterialIndex = index;
+            MaterialName = materialnames[index];
+            MaterialIndexNew = index;
+            RemoveBool = true;
+
+        }
+
+        public bool diff()
+        {
+            return ColorOld != ColorNew || MaterialIndex != MaterialIndexNew || RemoveBool == false;
+        }
 
 
-        
 
-            public Color ColorOld
-            {
-                get;
-                set;
-            }
 
-            public Color ColorNew
-            {
-                get;
-                set;
-            }
+        public Color ColorOld
+        {
+            get;
+            set;
+        }
 
-            public ObservableCollection<ColorItem> NonstandardColors
-            {
-                get;
-                set;
-            }
+        public Color ColorNew
+        {
+            get;
+            set;
+        }
+
+        public ObservableCollection<ColorItem> NonstandardColors
+        {
+            get;
+            set;
+        }
         }
 
         private string currentfile;
-
+        
         public BrickEntityMp old;
 
         //Open a Stevo Blueprint
@@ -415,11 +433,13 @@ namespace EvoEditApp
 
         public struct sevocol : IEquatable<sevocol>
         {
+           
             private byte r;
             private byte g;
             private byte b;
 
-
+            // Token: 0x06000F8A RID: 3978 RVA: 0x00015938 File Offset: 0x00013B38
+         
             public sevocol(Color color)
             {
                 r = (byte)color.R;
@@ -444,7 +464,7 @@ namespace EvoEditApp
 
             public Color C()
             {
-                return Color.FromRgb(r, g, b);
+                return r+g+b == 0 ? Color.FromArgb(0,r,g,b) : Color.FromRgb(r, g, b);
             }
 
             public bool Equals(sevocol other)
@@ -476,8 +496,8 @@ namespace EvoEditApp
             u = (ushort)(u << (ushort)4 | (ushort)x);
             return u;
         }
-        
 
+        private List<int> ingore = new List<int>() { 92, 96, 25, 109,97,93,26,110 };
         private void button_Click_export(object sender, RoutedEventArgs e)
         {
             if (!new FileInfo(currentfile).Exists)
@@ -490,7 +510,7 @@ namespace EvoEditApp
                 var x = BrickEntityMp.GetSaveFromFile(fs, true);
                 var s = new StringBuilder();
 
-                Dictionary<Tuple<sevocol,int>, Tuple<sevocol, int>> remap = MyListBoxData.Where(cswap => cswap.diff()).ToDictionary(cswap =>new Tuple<sevocol, int>(new sevocol(cswap.ColorOld),cswap.MaterialIndex)  , cswap => new Tuple<sevocol, int>(new sevocol(cswap.ColorNew), cswap.MaterialIndexNew));
+                Dictionary<Tuple<sevocol,int>, Tuple<sevocol, int,bool>> remap = MyListBoxData.Where(cswap => cswap.diff()).ToDictionary(cswap =>new Tuple<sevocol, int>(new sevocol(cswap.ColorOld),cswap.MaterialIndex)  , cswap => new Tuple<sevocol, int,bool>(new sevocol(cswap.ColorNew), cswap.MaterialIndexNew,cswap.RemoveBool.Value));
                 int sc = 1;
 
                 for (int i = 0; i < x.BrickDatasChildrens.Count; i++)
@@ -502,10 +522,20 @@ namespace EvoEditApp
                             if (x.BrickDatasChildrens[i].Datas[j].brickId != 0)
                             {
                                 var c = new Tuple<sevocol, int>(new sevocol(x.BrickDatasChildrens[i].Datas[j].color), (int)(x.BrickDatasChildrens[i].Datas[j].material)) ;
-                                if (remap.ContainsKey(c))
+                                if (!remap.ContainsKey(c)) continue;
+                                if (remap[c].Item3 || x.BrickDatasChildrens[i].Datas[j].brickId == 97 ||
+                                    x.BrickDatasChildrens[i].Datas[j].brickId == 93 ||
+                                    x.BrickDatasChildrens[i].Datas[j].brickId == 26 ||
+                                    x.BrickDatasChildrens[i].Datas[j].brickId == 110)
                                 {
                                     x.BrickDatasChildrens[i].Datas[j].color = remap[c].Item1.sevoC();
                                     x.BrickDatasChildrens[i].Datas[j].material = (uint)remap[c].Item2;
+                                }
+                                else
+                                {
+                                    if (j > 3)
+                                        if (!ingore.Contains(x.BrickDatasChildrens[i].Datas[j].brickId)) 
+                                            x.BrickDatasChildrens[i].Datas[j].brickId = 0;
                                 }
                             }
                         }
@@ -519,10 +549,19 @@ namespace EvoEditApp
                     if (x.BrickDatas.Datas[i].brickId != 0)
                     {
                         var c = new Tuple<sevocol, int>(new sevocol(x.BrickDatas.Datas[i].color), (int)(x.BrickDatas.Datas[i].material));
-                        if (remap.ContainsKey(c))
+                        if (!remap.ContainsKey(c)) continue;
+                        if (remap[c].Item3 || x.BrickDatas.Datas[i].brickId == 97 ||
+                                    x.BrickDatas.Datas[i].brickId == 93 ||
+                                    x.BrickDatas.Datas[i].brickId == 26 ||
+                                    x.BrickDatas.Datas[i].brickId == 110)
                         {
                             x.BrickDatas.Datas[i].color = remap[c].Item1.sevoC();
                             x.BrickDatas.Datas[i].material = (uint)remap[c].Item2;
+                        }
+                        else
+                        {
+                            if (!ingore.Contains(x.BrickDatas.Datas[i].brickId))
+                                x.BrickDatas.Datas[i].brickId = 0;
                         }
                     }
                 }

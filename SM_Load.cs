@@ -61,6 +61,123 @@ namespace EvoEditApp
             return _blist;
         }
 
+        public Dictionary<Vector3i, BlockBit> GetBlockList(bool mirror,int axis = 0)
+        {
+            
+            axis = 0;
+            if (!mirror) return _blist.Blist;
+            Console.WriteLine($"premirror = {_blist.Blist.Count}");
+            Dictionary<Vector3i, BlockBit> blist = new Dictionary<Vector3i, BlockBit>();
+           
+            //cut in half perfectly
+
+            int? minAxis = null;
+            int? maxAxis = null;
+
+            foreach (var keyPair in _blist.Blist)
+            {
+                if (!minAxis.HasValue)
+                {
+                    minAxis = keyPair.Key[axis];
+                }
+
+                if (!maxAxis.HasValue)
+                {
+                    maxAxis = keyPair.Key[axis];
+                }
+
+                if (keyPair.Key[axis] > maxAxis)
+                    maxAxis = keyPair.Key[axis];
+                if (keyPair.Key[axis] < minAxis)
+                    minAxis = keyPair.Key[axis];
+            }
+            double d = (double)(maxAxis.Value - minAxis.Value) / 2;
+            d = d + minAxis.Value;
+            foreach (var b in _blist.Blist.Where(b => b.Key[axis] > d && b.Value.GetSevoId() == 196))
+            {
+                blist.Add(b.Key, b.Value);
+                var diff = b.Key[axis] - (b.Key[axis] - d) * 2;
+                var mirrored = new Vector3i(b.Key.X, b.Key.Y, b.Key.Z);
+                mirrored[axis] = (int)diff;
+                blist.Add(mirrored, b.Value);
+            }
+            foreach (var b in _blist.Blist.Where(b => b.Value.GetSevoId() != 196).Where(b => !blist.ContainsKey(b.Key)))
+            {
+                blist.Add(b.Key, b.Value);
+            }
+            Console.WriteLine($"postmirror = {blist.Count}");
+            return blist;
+        }
+        public List<Dictionary<Vector3i, BlockBit>> GetBlockListPairs(bool mirror, int axis = 0)
+        {
+
+            axis = 0;
+            if (!mirror) return new List<Dictionary<Vector3i, BlockBit>> { _blist.Blist,null };
+            Console.WriteLine($"premirror = {_blist.Blist.Count}");
+            Dictionary<Vector3i, BlockBit> blist = new Dictionary<Vector3i, BlockBit>();
+            Dictionary<Vector3i, BlockBit> difflist = new Dictionary<Vector3i, BlockBit>();
+            //cut in half perfectly
+
+            int? minAxis = null;
+            int? maxAxis = null;
+
+            foreach (var keyPair in _blist.Blist)
+            {
+                if (!minAxis.HasValue)
+                {
+                    minAxis = keyPair.Key[axis];
+                }
+
+                if (!maxAxis.HasValue)
+                {
+                    maxAxis = keyPair.Key[axis];
+                }
+
+                if (keyPair.Key[axis] > maxAxis)
+                    maxAxis = keyPair.Key[axis];
+                if (keyPair.Key[axis] < minAxis)
+                    minAxis = keyPair.Key[axis];
+            }
+            double d = (double)(maxAxis.Value - minAxis.Value) / 2;
+            d = d + minAxis.Value;
+
+            foreach (var b in _blist.Blist.Where(b => b.Key[axis] >= d && b.Value.GetSevoId() == 196))
+            {
+                //blist.Add(b.Key, b.Value);
+                var diff = b.Key[axis] - (b.Key[axis] - d) * 2;
+                var mirrored = new Vector3i(b.Key.X, b.Key.Y, b.Key.Z);
+                mirrored[axis] = (int)diff;
+                if (_blist.Blist.ContainsKey(mirrored))
+                {
+                    if (mirrored[axis] == b.Key[axis])
+                    {
+                        //middle identified
+                        difflist.Add(b.Key, b.Value);
+                    }
+                    else if (_blist.Blist[mirrored].GetSevoId() == 196)
+                    {
+                        blist.Add(b.Key, b.Value);
+                        blist.Add(mirrored, b.Value);
+                    }
+                    else
+                    {
+                        difflist.Add(b.Key, b.Value);
+                    }
+                }
+                else
+                {
+                    difflist.Add(b.Key,b.Value);
+                }
+               
+            }
+            foreach (var b in _blist.Blist.Where(b => b.Value.GetSevoId() != 196))
+            {
+                blist.Add(b.Key, b.Value);
+            }
+          
+            return new List<Dictionary<Vector3i, BlockBit>>(){blist,difflist};
+        }
+
         public Tuple<Vector3i,Vector3i> get_min_max_vector()
         {
             var minT = new Vector3i(16, 16, 16);

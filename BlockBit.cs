@@ -14,6 +14,7 @@ namespace testapp1
         private readonly int _version;
         public Vector3i wedgeFactor;
         public bool Visited;
+       
         public bool invert;
         public BlockBit(int i, int v, bool u = false,bool inv=false)
         {

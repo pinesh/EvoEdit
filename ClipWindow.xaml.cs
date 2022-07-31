@@ -27,6 +27,7 @@ namespace EvoEditApp
     /// </summary>
     public partial class ClipWindow : Window
     {
+        /*
         public ClipWindow()
         {
             InitializeComponent();
@@ -270,7 +271,7 @@ namespace EvoEditApp
         {
             compareEqual = (sender as ComboBox).SelectedIndex == 0;
             if (ColorChoice.SelectedColor != null)
-                updateBlocks(new PaintWindow.sevocol(ColorChoice.SelectedColor.Value), compareEqual);
+                updateBlocks(new StevoPage.sevocol(ColorChoice.SelectedColor.Value), compareEqual);
         }
 
         private void ColorChoice_SelectedColorChanged(object sender, RoutedPropertyChangedEventArgs<Color?> e)
@@ -309,6 +310,6 @@ namespace EvoEditApp
 
                 MessageBox.Show("No Starter Block located. Check the base entity.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
-        }
+        }*/
     }
 }

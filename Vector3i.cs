@@ -269,8 +269,7 @@ namespace EvoEditApp
            switch (a)
            {
                 case 0://X
-                   // axis = new Vector3(1, 0, 0);
-                   return;
+                    axis = new Vector3(1, 0, 0);
                     break;
                 case 1://Y
                     axis = new Vector3(0, 1, 0);
